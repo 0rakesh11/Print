@@ -55,7 +55,6 @@ jobs:
               }
               buildTypes {
                   release { minifyEnabled false }
-                  debug { archiveBaseName.set("PrinterShare_USB_Edition") }
               }
               compileOptions {
                   sourceCompatibility JavaVersion.VERSION_17
@@ -197,7 +196,7 @@ jobs:
                           }
                           onResult(true, "Print Job Sent Successfully!")
                       } catch (e: Exception) {
-                          onResult(false, "Error: ${e.message}")
+                          onResult(false, "Error: " + e.message)
                       } finally {
                           try { if (intf != null) conn?.releaseInterface(intf); conn?.close() } catch(_:Exception){}
                       }
@@ -216,7 +215,9 @@ jobs:
                           val lum = (0.299*((p shr 16) and 0xFF) + 0.587*((p shr 8) and 0xFF) + 0.114*(p and 0xFF)).toInt()
                           if (lum < 165) buf[x/8] = (buf[x/8].toInt() or (1 shl (7 - (x%8)))).toByte()
                       }
-                      out.write("\\u001B*b0M\\u001B*b${rowBytes}W".toByteArray())
+                      out.write("\\u001B*b0M\\u001B*b".toByteArray())
+                      out.write(rowBytes.toString().toByteArray())
+                      out.write("W".toByteArray())
                       out.write(buf)
                   }
                   out.write("\\u001B*rB\\u000C\\u001BE".toByteArray())
@@ -283,7 +284,7 @@ jobs:
 
                   btnGo.setOnClickListener {
                       var url = etUrl.text.toString().trim()
-                      if (!url.startsWith("http")) url = "https://$url"
+                      if (!url.startsWith("http")) url = "https://" + url
                       webView.loadUrl(url)
                   }
                   btnCapture.setOnClickListener {
@@ -300,7 +301,6 @@ jobs:
               f.write("""package com.example.printershareusb
           import android.app.AlertDialog
           import android.graphics.*
-          import android.graphics.pdf.PdfRenderer
           import android.net.Uri
           import android.os.Bundle
           import android.widget.*
@@ -310,7 +310,7 @@ jobs:
           class PrintPreviewActivity : AppCompatActivity() {
               private var renderedBitmap: Bitmap? = null
               private val sourceBmps = mutableListOf<Bitmap>()
-              private var pictureSize = "4\\"×6\\" (10×15 cm)"
+              private var pictureSize = "4x6 (10x15 cm)"
               private var pictureScaling = "Crop"
               private var pictureAlign = "Center"
               private var pageMargins = "Normal"
@@ -347,12 +347,12 @@ jobs:
               }
 
               private fun showOptionsDialog() {
-                  val items = arrayOf("Picture Size: $pictureSize", "Picture Scaling: $pictureScaling", "Picture Align: $pictureAlign", "Page Margins: $pageMargins", "Page Orientation: $pageOrientation")
+                  val items = arrayOf("Picture Size: " + pictureSize, "Picture Scaling: " + pictureScaling, "Picture Align: " + pictureAlign, "Page Margins: " + pageMargins, "Page Orientation: " + pageOrientation)
                   AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
                       .setTitle("Print Options")
                       .setItems(items) { _, which ->
                           when(which) {
-                              0 -> showSingle("Picture Size", arrayOf("Fit to page", "4\\"×6\\" (10×15 cm)", "5\\"×7\\" (13×18 cm)", "8\\"×10\\" (20×25 cm)"), pictureSize) { pictureSize = it; renderCanvas() }
+                              0 -> showSingle("Picture Size", arrayOf("Fit to page", "4x6 (10x15 cm)", "5x7 (13x18 cm)", "8x10 (20x25 cm)"), pictureSize) { pictureSize = it; renderCanvas() }
                               1 -> showSingle("Picture Scaling", arrayOf("Crop", "Inside"), pictureScaling) { pictureScaling = it; renderCanvas() }
                               2 -> showSingle("Picture Align", arrayOf("Center", "Top Left", "Top Right", "Bottom Left", "Bottom Right"), pictureAlign) { pictureAlign = it; renderCanvas() }
                               3 -> showSingle("Page Margins", arrayOf("No (minimum allowable)", "Small", "Normal", "Large"), pageMargins) { pageMargins = it; renderCanvas() }
@@ -378,277 +378,4 @@ jobs:
                   val m = when(pageMargins) { "No (minimum allowable)" -> 0; "Small" -> 36; "Large" -> 135; else -> 75 }
                   val aW = pW - (m * 2); val aH = pH - (m * 2)
 
-                  var (bW, bH) = when(pictureSize) {
-                      "4\\"×6\\" (10×15 cm)" -> Pair(600, 900)
-                      "5\\"×7\\" (13×18 cm)" -> Pair(750, 1050)
-                      "8\\"×10\\" (20×25 cm)" -> Pair(1200, 1500)
-                      else -> Pair(aW, aH)
-                  }
-                  bW = bW.coerceAtMost(aW); bH = bH.coerceAtMost(aH)
-                  val left = m + (aW - bW) / 2; val top = m + (aH - bH) / 2
-                  val rect = Rect(left, top, left + bW, top + bH)
-
-                  val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
-                  if (pictureScaling == "Crop") {
-                      val scale = maxOf(bW.toFloat() / bmp.width, bH.toFloat() / bmp.height)
-                      val cW = (bW / scale).toInt(); val cH = (bH / scale).toInt()
-                      val cX = (bmp.width - cW) / 2; val cY = (bmp.height - cH) / 2
-                      canvas.drawBitmap(bmp, Rect(cX, cY, cX + cW, cY + cH), rect, paint)
-                  } else {
-                      val scale = minOf(bW.toFloat() / bmp.width, bH.toFloat() / bmp.height)
-                      val dW = (bmp.width * scale).toInt(); val dH = (bmp.height * scale).toInt()
-                      canvas.drawBitmap(bmp, null, Rect(left + (bW - dW)/2, top + (bH - dH)/2, left + (bW - dW)/2 + dW, top + (bH - dH)/2 + dH), paint)
-                  }
-                  renderedBitmap = sheet
-                  findViewById<ImageView>(R.id.ivPageCanvas).setImageBitmap(sheet)
-              }
-
-              private fun createBmpFromText(txt: String): Bitmap {
-                  val bmp = Bitmap.createBitmap(1200, 1600, Bitmap.Config.ARGB_8888)
-                  val canvas = Canvas(bmp); canvas.drawColor(Color.WHITE)
-                  val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.BLACK; textSize = 36f }
-                  var y = 100f
-                  for (line in txt.split("\\n")) { canvas.drawText(line, 60f, y, paint); y += 52f }
-                  return bmp
-              }
-          }
-          """)
-
-          with open("app/src/main/java/com/example/printershareusb/MainActivity.kt", "w") as f:
-              f.write("""package com.example.printershareusb
-          import android.app.Activity
-          import android.app.AlertDialog
-          import android.content.Intent
-          import android.content.SharedPreferences
-          import android.graphics.Color
-          import android.os.Bundle
-          import android.widget.*
-          import androidx.appcompat.app.AppCompatActivity
-          import androidx.appcompat.app.AppCompatDelegate
-
-          class MainActivity : AppCompatActivity() {
-              private lateinit var usbHelper: UsbPrinterHelper
-              private lateinit var tvStatus: TextView
-              private lateinit var rootLayout: RelativeLayout
-              private lateinit var prefs: SharedPreferences
-
-              override fun onCreate(savedInstanceState: Bundle?) {
-                  super.onCreate(savedInstanceState)
-                  prefs = getSharedPreferences("settings", MODE_PRIVATE)
-                  val isDark = prefs.getBoolean("dark_mode", true)
-                  AppCompatDelegate.setDefaultNightMode(if (isDark) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO)
-
-                  setContentView(R.layout.activity_main)
-                  usbHelper = UsbPrinterHelper(this)
-                  tvStatus = findViewById(R.id.tvPrinterStatus)
-
-                  usbHelper.findUsbPrinter()?.let { tvStatus.text = UsbPrinterHelper.selectedPrinterName }
-
-                  // Header Theme Toggle Button
-                  findViewById<Button>(R.id.btnThemeToggle).setOnClickListener {
-                      val current = prefs.getBoolean("dark_mode", true)
-                      prefs.edit().putBoolean("dark_mode", !current).apply()
-                      recreate()
-                  }
-
-                  findViewById<Button>(R.id.btnSelectPrinter).setOnClickListener {
-                      val items = arrayOf("📡 Nearby WiFi", "🦷 Nearby Bluetooth", "🔌 Direct USB Connected", "📄 Print to PDF")
-                      AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                          .setTitle("Select Printer")
-                          .setItems(items) { _, which ->
-                              if (which == 2) {
-                                  val dev = usbHelper.findUsbPrinter()
-                                  if (dev != null) { usbHelper.requestPermission(dev); tvStatus.text = dev.productName ?: "HP Ink Tank 319" }
-                                  else { Toast.makeText(this, "USB Printer nahi mila!", Toast.LENGTH_SHORT).show() }
-                              } else {
-                                  UsbPrinterHelper.selectedPrinterName = items[which].substring(3).trim()
-                                  tvStatus.text = UsbPrinterHelper.selectedPrinterName
-                              }
-                          }.show()
-                  }
-
-                  findViewById<Button>(R.id.btnPictures).setOnClickListener {
-                      startActivityForResult(Intent(Intent.ACTION_GET_CONTENT).apply { type = "image/*"; putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true) }, 101)
-                  }
-                  findViewById<Button>(R.id.btnDocuments).setOnClickListener {
-                      startActivityForResult(Intent(Intent.ACTION_GET_CONTENT).apply { type = "application/pdf" }, 102)
-                  }
-                  findViewById<Button>(R.id.btnWebPages).setOnClickListener {
-                      startActivity(Intent(this, WebPrintActivity::class.java))
-                  }
-
-                  val infoClick = { title: String, msg: String ->
-                      AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                          .setTitle(title).setMessage(msg)
-                          .setPositiveButton("Proceed to Print") { _, _ ->
-                              startActivity(Intent(this, PrintPreviewActivity::class.java).putExtra("TEXT_CONTENT", "$title:\\n$msg"))
-                          }.setNegativeButton("Cancel", null).show()
-                  }
-
-                  findViewById<Button>(R.id.btnGmail).setOnClickListener { infoClick("Print Gmail", "Select emails to print directly via USB OTG.") }
-                  findViewById<Button>(R.id.btnContacts).setOnClickListener { infoClick("Print Contacts", "Exported Address Book & Phone Directory.") }
-                  findViewById<Button>(R.id.btnCalendar).setOnClickListener { infoClick("Print Calendar", "Scheduled Events & Reminders for this week.") }
-                  findViewById<Button>(R.id.btnMessages).setOnClickListener { infoClick("Print Messages", "SMS threads and chat history export.") }
-                  findViewById<Button>(R.id.btnCallLog).setOnClickListener { infoClick("Print Call Log", "Recent incoming, outgoing & missed calls.") }
-              }
-
-              override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-                  super.onActivityResult(requestCode, resultCode, data)
-                  if (resultCode == RESULT_OK && data != null) {
-                      val uris = ArrayList<String>()
-                      if (data.clipData != null) {
-                          for (i in 0 until data.clipData!!.itemCount) uris.add(data.clipData!!.getItemAt(i).uri.toString())
-                      } else if (data.data != null) uris.add(data.data!!.toString())
-                      if (uris.isNotEmpty()) {
-                          startActivity(Intent(this, PrintPreviewActivity::class.java).putStringArrayListExtra("FILE_URIS", uris))
-                      }
-                  }
-              }
-          }
-          """)
-
-          with open("app/src/main/res/layout/activity_main.xml", "w") as f:
-              f.write("""<?xml version="1.0" encoding="utf-8"?>
-          <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:background="?android:attr/colorBackground">
-
-              <RelativeLayout
-                  android:id="@+id/headerBar"
-                  android:layout_width="match_parent"
-                  android:layout_height="56dp"
-                  android:background="#0D0D0D"
-                  android:paddingStart="16dp"
-                  android:paddingEnd="16dp">
-
-                  <TextView
-                      android:layout_width="wrap_content"
-                      android:layout_height="wrap_content"
-                      android:layout_centerVertical="true"
-                      android:text="PrinterShare USB Edition"
-                      android:textColor="#FFFFFF"
-                      android:textSize="18sp"
-                      android:textStyle="bold" />
-
-                  <Button
-                      android:id="@+id/btnThemeToggle"
-                      android:layout_width="42dp"
-                      android:layout_height="42dp"
-                      android:layout_alignParentEnd="true"
-                      android:layout_centerVertical="true"
-                      android:background="#2C2C2C"
-                      android:text="🌓"
-                      android:textColor="#FFFFFF"
-                      android:textSize="16sp" />
-              </RelativeLayout>
-
-              <View
-                  android:id="@+id/headerDivider"
-                  android:layout_width="match_parent"
-                  android:layout_height="2dp"
-                  android:layout_below="@id/headerBar"
-                  android:background="#0099CC" />
-
-              <ScrollView
-                  android:layout_width="match_parent"
-                  android:layout_height="match_parent"
-                  android:layout_above="@+id/bottomBar"
-                  android:layout_below="@id/headerDivider">
-
-                  <GridLayout
-                      android:layout_width="match_parent"
-                      android:layout_height="wrap_content"
-                      android:columnCount="2"
-                      android:padding="16dp">
-
-                      <Button android:id="@+id/btnPictures" android:layout_width="0dp" android:layout_height="110dp" android:layout_columnWeight="1" android:layout_margin="6dp" android:background="#161616" android:text="🖼️\nPictures" android:textColor="#FFFFFF" android:textAllCaps="false"/>
-                      <Button android:id="@+id/btnDocuments" android:layout_width="0dp" android:layout_height="110dp" android:layout_columnWeight="1" android:layout_margin="6dp" android:background="#161616" android:text="📁\nDocuments" android:textColor="#FFFFFF" android:textAllCaps="false"/>
-                      <Button android:id="@+id/btnWebPages" android:layout_width="0dp" android:layout_height="110dp" android:layout_columnWeight="1" android:layout_margin="6dp" android:background="#161616" android:text="🌐\nWeb Pages" android:textColor="#FFFFFF" android:textAllCaps="false"/>
-                      <Button android:id="@+id/btnGmail" android:layout_width="0dp" android:layout_height="110dp" android:layout_columnWeight="1" android:layout_margin="6dp" android:background="#161616" android:text="✉️\nGmail" android:textColor="#FFFFFF" android:textAllCaps="false"/>
-                      <Button android:id="@+id/btnContacts" android:layout_width="0dp" android:layout_height="110dp" android:layout_columnWeight="1" android:layout_margin="6dp" android:background="#161616" android:text="👤\nContacts" android:textColor="#FFFFFF" android:textAllCaps="false"/>
-                      <Button android:id="@+id/btnCalendar" android:layout_width="0dp" android:layout_height="110dp" android:layout_columnWeight="1" android:layout_margin="6dp" android:background="#161616" android:text="📅\nCalendar" android:textColor="#FFFFFF" android:textAllCaps="false"/>
-                      <Button android:id="@+id/btnMessages" android:layout_width="0dp" android:layout_height="110dp" android:layout_columnWeight="1" android:layout_margin="6dp" android:background="#161616" android:text="💬\nMessages" android:textColor="#FFFFFF" android:textAllCaps="false"/>
-                      <Button android:id="@+id/btnCallLog" android:layout_width="0dp" android:layout_height="110dp" android:layout_columnWeight="1" android:layout_margin="6dp" android:background="#161616" android:text="📞\nCall Log" android:textColor="#FFFFFF" android:textAllCaps="false"/>
-                  </GridLayout>
-              </ScrollView>
-
-              <RelativeLayout
-                  android:id="@+id/bottomBar"
-                  android:layout_width="match_parent"
-                  android:layout_height="72dp"
-                  android:layout_alignParentBottom="true"
-                  android:background="#141414"
-                  android:padding="12dp">
-
-                  <TextView android:id="@+id/tvPrinterTitle" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🖨️ Printer" android:textColor="#FFFFFF" android:textStyle="bold" />
-                  <TextView android:id="@+id/tvPrinterStatus" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_below="@id/tvPrinterTitle" android:text="Not selected" android:textColor="#999999" android:textSize="13sp" />
-                  <Button android:id="@+id/btnSelectPrinter" android:layout_width="110dp" android:layout_height="40dp" android:layout_alignParentEnd="true" android:layout_centerVertical="true" android:background="#2C2C2C" android:text="Select" android:textColor="#FFFFFF" android:textAllCaps="false"/>
-              </RelativeLayout>
-          </RelativeLayout>
-          """)
-
-          with open("app/src/main/res/layout/activity_print_preview.xml", "w") as f:
-              f.write("""<?xml version="1.0" encoding="utf-8"?>
-          <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:background="#000000">
-
-              <RelativeLayout
-                  android:id="@+id/previewHeader"
-                  android:layout_width="match_parent"
-                  android:layout_height="56dp"
-                  android:background="#0D0D0D"
-                  android:paddingStart="16dp"
-                  android:paddingEnd="16dp">
-                  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_centerVertical="true" android:text="Print Preview" android:textColor="#FFFFFF" android:textSize="20sp" android:textStyle="bold" />
-              </RelativeLayout>
-
-              <View android:id="@+id/previewDivider" android:layout_width="match_parent" android:layout_height="2dp" android:layout_below="@id/previewHeader" android:background="#0099CC" />
-
-              <FrameLayout
-                  android:layout_width="match_parent"
-                  android:layout_height="match_parent"
-                  android:layout_above="@+id/bottomControls"
-                  android:layout_below="@id/previewDivider"
-                  android:padding="18dp">
-                  <ImageView android:id="@+id/ivPageCanvas" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitCenter" />
-              </FrameLayout>
-
-              <RelativeLayout
-                  android:id="@+id/bottomControls"
-                  android:layout_width="match_parent"
-                  android:layout_height="110dp"
-                  android:layout_alignParentBottom="true"
-                  android:background="#141414"
-                  android:padding="12dp">
-                  <Button android:id="@+id/btnOptions" android:layout_width="110dp" android:layout_height="42dp" android:layout_alignParentEnd="true" android:background="#2C2C2C" android:text="Options" android:textColor="#FFFFFF" android:textAllCaps="false"/>
-                  <Button android:id="@+id/btnPrint" android:layout_width="110dp" android:layout_height="42dp" android:layout_below="@id/btnOptions" android:layout_alignParentEnd="true" android:layout_marginTop="8dp" android:background="#0099CC" android:text="Print" android:textColor="#FFFFFF" android:textAllCaps="false"/>
-              </RelativeLayout>
-          </RelativeLayout>
-          """)
-
-          EOF
-          if [ -f "HP319_USB_OTG_Printer_Full_Project.zip" ]; then unzip -o HP319_USB_OTG_Printer_Full_Project.zip; fi
-          if [ -d "HP319_USB_Printer_App" ]; then cp -r HP319_USB_Printer_App/* .; fi
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
-        with:
-          gradle-version: '8.4'
-
-      - name: Build Debug APK
-        run: gradle assembleDebug --stacktrace
-
-      - name: Upload Compiled APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: PrinterShare_USB_Edition
-          path: app/build/outputs/apk/debug/PrinterShare_USB_Edition.apk
+                  var (
