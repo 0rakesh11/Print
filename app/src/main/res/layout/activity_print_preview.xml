@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000">
+
+    <!-- Header -->
+    <RelativeLayout
+        android:id="@+id/previewHeader"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="#0D0D0D"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:text="Print Preview"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:id="@+id/pdfNavLayout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnPrevPage"
+                android:layout_width="40dp"
+                android:layout_height="36dp"
+                android:background="#2C2C2C"
+                android:text="&lt;"
+                android:textColor="#FFFFFF" />
+
+            <TextView
+                android:id="@+id/tvPageIndicator"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
+                android:text="1 / 1"
+                android:textColor="#CCCCCC"
+                android:textSize="14sp" />
+
+            <Button
+                android:id="@+id/btnNextPage"
+                android:layout_width="40dp"
+                android:layout_height="36dp"
+                android:background="#2C2C2C"
+                android:text="&gt;"
+                android:textColor="#FFFFFF" />
+        </LinearLayout>
+    </RelativeLayout>
+
+    <View
+        android:id="@+id/previewDivider"
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:layout_below="@id/previewHeader"
+        android:background="#0099CC" />
+
+    <!-- Page Canvas Preview -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/bottomControls"
+        android:layout_below="@id/previewDivider"
+        android:padding="18dp">
+
+        <ImageView
+            android:id="@+id/ivPageCanvas"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="fitCenter" />
+    </FrameLayout>
+
+    <!-- Bottom Controls -->
+    <RelativeLayout
+        android:id="@+id/bottomControls"
+        android:layout_width="match_parent"
+        android:layout_height="118dp"
+        android:layout_alignParentBottom="true"
+        android:background="#141414"
+        android:padding="12dp">
+
+        <TextView
+            android:id="@+id/tvPageSummary"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_toStartOf="@+id/btnOptions"
+            android:lineSpacingExtra="2dp"
+            android:text="Letter / A4
+Normal
+Default Tray"
+            android:textColor="#CCCCCC"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/tvSelectedPrinterPreview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tvPageSummary"
+            android:layout_marginTop="6dp"
+            android:text="🖨️ HP Ink Tank 319 (USB OTG)"
+            android:textColor="#0099CC"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btnOptions"
+            android:layout_width="110dp"
+            android:layout_height="42dp"
+            android:layout_alignParentEnd="true"
+            android:background="#2C2C2C"
+            android:text="Options"
+            android:textAllCaps="false"
+            android:textColor="#FFFFFF" />
+
+        <Button
+            android:id="@+id/btnPrint"
+            android:layout_width="110dp"
+            android:layout_height="42dp"
+            android:layout_below="@id/btnOptions"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="8dp"
+            android:background="#2C2C2C"
+            android:text="Print"
+            android:textAllCaps="false"
+            android:textColor="#FFFFFF" />
+    </RelativeLayout>
+</RelativeLayout>

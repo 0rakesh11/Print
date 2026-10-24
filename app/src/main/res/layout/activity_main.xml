@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000">
+
+    <!-- Top Action Bar -->
+    <RelativeLayout
+        android:id="@+id/headerBar"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="#0D0D0D"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:text="PrinterShare USB Edition"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+    </RelativeLayout>
+
+    <View
+        android:id="@+id/headerDivider"
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:layout_below="@id/headerBar"
+        android:background="#0099CC" />
+
+    <!-- Main 8-Button Grid -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/bottomBar"
+        android:layout_below="@id/headerDivider">
+
+        <GridLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:columnCount="2"
+            android:padding="16dp"
+            android:rowCount="4">
+
+            <Button
+                android:id="@+id/btnPictures"
+                android:layout_width="0dp"
+                android:layout_height="115dp"
+                android:layout_columnWeight="1"
+                android:layout_margin="8dp"
+                android:background="#161616"
+                android:text="🖼️
+Pictures"
+                android:textAllCaps="false"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp" />
+
+            <Button
+                android:id="@+id/btnDocuments"
+                android:layout_width="0dp"
+                android:layout_height="115dp"
+                android:layout_columnWeight="1"
+                android:layout_margin="8dp"
+                android:background="#161616"
+                android:text="📁
+Documents"
+                android:textAllCaps="false"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp" />
+
+            <Button
+                android:id="@+id/btnWebPages"
+                android:layout_width="0dp"
+                android:layout_height="115dp"
+                android:layout_columnWeight="1"
+                android:layout_margin="8dp"
+                android:background="#161616"
+                android:text="🌐
+Web Pages"
+                android:textAllCaps="false"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp" />
+
+            <Button
+                android:id="@+id/btnGmail"
+                android:layout_width="0dp"
+                android:layout_height="115dp"
+                android:layout_columnWeight="1"
+                android:layout_margin="8dp"
+                android:background="#161616"
+                android:text="✉️
+Gmail"
+                android:textAllCaps="false"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp" />
+
+            <Button
+                android:id="@+id/btnContacts"
+                android:layout_width="0dp"
+                android:layout_height="115dp"
+                android:layout_columnWeight="1"
+                android:layout_margin="8dp"
+                android:background="#161616"
+                android:text="👤
+Contacts"
+                android:textAllCaps="false"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp" />
+
+            <Button
+                android:id="@+id/btnCalendar"
+                android:layout_width="0dp"
+                android:layout_height="115dp"
+                android:layout_columnWeight="1"
+                android:layout_margin="8dp"
+                android:background="#161616"
+                android:text="📅
+Calendar"
+                android:textAllCaps="false"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp" />
+
+            <Button
+                android:id="@+id/btnMessages"
+                android:layout_width="0dp"
+                android:layout_height="115dp"
+                android:layout_columnWeight="1"
+                android:layout_margin="8dp"
+                android:background="#161616"
+                android:text="💬
+Messages"
+                android:textAllCaps="false"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp" />
+
+            <Button
+                android:id="@+id/btnCallLog"
+                android:layout_width="0dp"
+                android:layout_height="115dp"
+                android:layout_columnWeight="1"
+                android:layout_margin="8dp"
+                android:background="#161616"
+                android:text="📞
+Call Log"
+                android:textAllCaps="false"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp" />
+        </GridLayout>
+    </ScrollView>
+
+    <!-- Bottom Printer Status Bar -->
+    <RelativeLayout
+        android:id="@+id/bottomBar"
+        android:layout_width="match_parent"
+        android:layout_height="72dp"
+        android:layout_alignParentBottom="true"
+        android:background="#141414"
+        android:padding="12dp">
+
+        <TextView
+            android:id="@+id/tvPrinterTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🖨️ Printer"
+            android:textColor="#FFFFFF"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvPrinterStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tvPrinterTitle"
+            android:layout_marginTop="2dp"
+            android:text="Not selected"
+            android:textColor="#999999"
+            android:textSize="13sp" />
+
+        <Button
+            android:id="@+id/btnSelectPrinter"
+            android:layout_width="110dp"
+            android:layout_height="44dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:background="#2C2C2C"
+            android:text="Select"
+            android:textAllCaps="false"
+            android:textColor="#FFFFFF" />
+    </RelativeLayout>
+</RelativeLayout>
