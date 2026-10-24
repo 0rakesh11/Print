@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Class 7 covers all USB Printers; Vendor ID 1008 (0x03F0) is Hewlett-Packard (HP Ink Tank 319) -->
+    <usb-device class="7" />
+    <usb-device vendor-id="1008" />
+</resources>
