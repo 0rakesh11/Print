@@ -8,20 +8,19 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Clean Workspace & Generate Project
+      - name: Generate Project Files
         run: |
           rm -rf * .[^.]* 2>/dev/null || true
-          cat << ' PYEOF' > generate.py
+          python3 -c '
           import os
 
-          def write_file(path, content):
-              d = os.path.dirname(path)
-              if d:
-                  os.makedirs(d, exist_ok=True)
-              with open(path, "w", encoding="utf-8") as f:
-                  f.write(content.strip() + "\n")
+          def w(p, c):
+              if os.path.dirname(p):
+                  os.makedirs(os.path.dirname(p), exist_ok=True)
+              with open(p, "w", encoding="utf-8") as f:
+                  f.write(c.strip() + "\n")
 
-          write_file("settings.gradle", """
+          w("settings.gradle", """
           pluginManagement {
               repositories {
                   google()
@@ -37,40 +36,38 @@ jobs:
               }
           }
           rootProject.name = "PrinterShare_USB_Edition"
-          include ':app'
+          include ":app"
           """)
 
-          write_file("build.gradle", """
+          w("build.gradle", """
           plugins {
-              id 'com.android.application' version '8.2.0' apply false
-              id 'org.jetbrains.kotlin.android' version '1.9.20' apply false
+              id "com.android.application" version "8.2.0" apply false
+              id "org.jetbrains.kotlin.android" version "1.9.20" apply false
           }
           """)
 
-          write_file("gradle.properties", """
+          w("gradle.properties", """
           org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
           android.useAndroidX=true
           android.nonTransitiveRClass=true
           """)
 
-          write_file("app/build.gradle", """
+          w("app/build.gradle", """
           plugins {
-              id 'com.android.application'
-              id 'org.jetbrains.kotlin.android'
+              id "com.android.application"
+              id "org.jetbrains.kotlin.android"
           }
-
           android {
-              namespace 'com.example.printershareusb'
+              namespace "com.example.printershareusb"
               compileSdk 34
-
               defaultConfig {
                   applicationId "com.example.printershareusb"
                   minSdk 24
                   targetSdk 34
                   versionCode 2
                   versionName "2.0"
+                  setProperty("archivesBaseName", "PrinterShare_USB_Edition")
               }
-
               buildTypes {
                   release {
                       minifyEnabled false
@@ -81,22 +78,20 @@ jobs:
                   targetCompatibility JavaVersion.VERSION_17
               }
               kotlinOptions {
-                  jvmTarget = '17'
+                  jvmTarget = "17"
               }
           }
-
           dependencies {
-              implementation 'androidx.core:core-ktx:1.12.0'
-              implementation 'androidx.appcompat:appcompat:1.6.1'
-              implementation 'com.google.android.material:material:1.11.0'
-              implementation 'androidx.print:print:1.0.0'
+              implementation "androidx.core:core-ktx:1.12.0"
+              implementation "androidx.appcompat:appcompat:1.6.1"
+              implementation "com.google.android.material:material:1.11.0"
+              implementation "androidx.print:print:1.0.0"
           }
           """)
 
-          write_file("app/src/main/AndroidManifest.xml", """
+          w("app/src/main/AndroidManifest.xml", """
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-
               <uses-feature android:name="android.hardware.usb.host" android:required="true" />
               <uses-permission android:name="android.permission.INTERNET" />
               <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -131,7 +126,7 @@ jobs:
           </manifest>
           """)
 
-          write_file("app/src/main/res/xml/usb_device_filter.xml", """
+          w("app/src/main/res/xml/usb_device_filter.xml", """
           <?xml version="1.0" encoding="utf-8"?>
           <resources>
               <usb-device class="7" />
@@ -139,34 +134,25 @@ jobs:
           </resources>
           """)
 
-          write_file("app/src/main/res/drawable/ic_launcher_printer.xml", """
+          w("app/src/main/res/drawable/ic_launcher_printer.xml", """
           <vector xmlns:android="http://schemas.android.com/apk/res/android"
               android:width="108dp"
               android:height="108dp"
               android:viewportWidth="108"
               android:viewportHeight="108">
-              <path
-                  android:fillColor="#0288D1"
-                  android:pathData="M0,0h108v108h-108z" />
-              <path
-                  android:fillColor="#01579B"
-                  android:pathData="M18,18h72v72h-72z" />
-              <path
-                  android:fillColor="#FFFFFF"
-                  android:pathData="M74,42H34c-4.4,0 -8,3.6 -8,8v18h10v14h36V68h10V50C82,45.6 78.4,42 74,42zM66,76H42V60h24V76zM74,53c-1.7,0 -3,-1.3 -3,-3s1.3,-3 3,-3s3,1.3 3,3S75.7,53 74,53zM70,26H38v12h32V26z" />
+              <path android:fillColor="#0288D1" android:pathData="M0,0h108v108h-108z" />
+              <path android:fillColor="#01579B" android:pathData="M18,18h72v72h-72z" />
+              <path android:fillColor="#FFFFFF" android:pathData="M74,42H34c-4.4,0 -8,3.6 -8,8v18h10v14h36V68h10V50C82,45.6 78.4,42 74,42zM66,76H42V60h24V76zM74,53c-1.7,0 -3,-1.3 -3,-3s1.3,-3 3,-3s3,1.3 3,3S75.7,53 74,53zM70,26H38v12h32V26z" />
           </vector>
           """)
 
-          write_file("app/src/main/java/com/example/printershareusb/ThemePrefs.kt", """
+          w("app/src/main/java/com/example/printershareusb/ThemePrefs.kt", """
           package com.example.printershareusb
-
           import android.content.Context
           import android.graphics.Color
 
           object ThemePrefs {
-              fun isDark(ctx: Context): Boolean {
-                  return ctx.getSharedPreferences("ui_prefs", Context.MODE_PRIVATE).getBoolean("dark", true)
-              }
+              fun isDark(ctx: Context): Boolean = ctx.getSharedPreferences("ui_prefs", Context.MODE_PRIVATE).getBoolean("dark", true)
               fun toggle(ctx: Context) {
                   val cur = isDark(ctx)
                   ctx.getSharedPreferences("ui_prefs", Context.MODE_PRIVATE).edit().putBoolean("dark", !cur).apply()
@@ -179,9 +165,8 @@ jobs:
           }
           """)
 
-          write_file("app/src/main/java/com/example/printershareusb/UsbPrinterHelper.kt", """
+          w("app/src/main/java/com/example/printershareusb/UsbPrinterHelper.kt", """
           package com.example.printershareusb
-
           import android.app.PendingIntent
           import android.content.Context
           import android.content.Intent
@@ -193,13 +178,11 @@ jobs:
 
           class UsbPrinterHelper(private val context: Context) {
               val usbManager: UsbManager = context.getSystemService(Context.USB_SERVICE) as UsbManager
-
               companion object {
                   const val ACTION_USB_PERMISSION = "com.example.printershareusb.USB_PERMISSION"
                   var selectedPrinterName: String = "Not selected"
                   var connectedUsbDevice: UsbDevice? = null
               }
-
               fun findUsbPrinter(): UsbDevice? {
                   for (device in usbManager.deviceList.values) {
                       if (device.vendorId == 1008 || device.deviceClass == UsbConstants.USB_CLASS_PRINTER) {
@@ -217,13 +200,11 @@ jobs:
                   }
                   return null
               }
-
               fun requestPermission(device: UsbDevice) {
                   val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) PendingIntent.FLAG_MUTABLE else 0
                   val pi = PendingIntent.getBroadcast(context, 0, Intent(ACTION_USB_PERMISSION), flags)
                   usbManager.requestPermission(device, pi)
               }
-
               fun sendRawUsbPrintJob(bmp: Bitmap, onResult: (Boolean, String) -> Unit) {
                   val dev = connectedUsbDevice ?: findUsbPrinter()
                   if (dev == null) {
@@ -278,19 +259,17 @@ jobs:
                       }
                   }.start()
               }
-
               private fun encodeToPcl(bmp: Bitmap): ByteArray {
                   val out = ByteArrayOutputStream()
                   val esc = 27.toByte()
                   out.write(byteArrayOf(esc))
-                  out.write("%-12345X@PJL\r\n@PJL ENTER LANGUAGE = PCL\r\n".toByteArray())
+                  out.write("%-12345X@PJL\\r\\n@PJL ENTER LANGUAGE = PCL\\r\\n".toByteArray())
                   out.write(byteArrayOf(esc))
                   out.write("E".toByteArray())
                   out.write(byteArrayOf(esc))
                   out.write("*t150R".toByteArray())
                   out.write(byteArrayOf(esc))
                   out.write("*r1A".toByteArray())
-
                   val w = bmp.width
                   val h = bmp.height
                   val rowBytes = (w + 7) / 8
@@ -305,13 +284,14 @@ jobs:
                           }
                       }
                       out.write(byteArrayOf(esc))
-                      out.write(("*b0M").toByteArray())
+                      out.write("*b0M".toByteArray())
                       out.write(byteArrayOf(esc))
                       out.write(("*b" + rowBytes.toString() + "W").toByteArray())
                       out.write(buf)
                   }
                   out.write(byteArrayOf(esc))
-                  out.write("*rB\u000C".toByteArray())
+                  out.write("*rB".toByteArray())
+                  out.write(byteArrayOf(12.toByte()))
                   out.write(byteArrayOf(esc))
                   out.write("E".toByteArray())
                   return out.toByteArray()
@@ -319,9 +299,8 @@ jobs:
           }
           """)
 
-          write_file("app/src/main/java/com/example/printershareusb/WebPrintActivity.kt", """
+          w("app/src/main/java/com/example/printershareusb/WebPrintActivity.kt", """
           package com.example.printershareusb
-
           import android.content.Intent
           import android.graphics.Bitmap
           import android.graphics.Canvas
@@ -334,25 +313,19 @@ jobs:
           import androidx.appcompat.app.AppCompatActivity
 
           class WebPrintActivity : AppCompatActivity() {
-              companion object {
-                  var capturedWebBitmap: Bitmap? = null
-              }
-
+              companion object { var capturedWebBitmap: Bitmap? = null }
               override fun onCreate(savedInstanceState: Bundle?) {
                   super.onCreate(savedInstanceState)
-
                   val root = LinearLayout(this).apply {
                       orientation = LinearLayout.VERTICAL
                       setBackgroundColor(ThemePrefs.bgColor(this@WebPrintActivity))
                   }
-
                   val topBar = LinearLayout(this).apply {
                       orientation = LinearLayout.HORIZONTAL
                       setPadding(16, 14, 16, 14)
                       setBackgroundColor(ThemePrefs.barColor(this@WebPrintActivity))
                       gravity = Gravity.CENTER_VERTICAL
                   }
-
                   val etUrl = EditText(this).apply {
                       layoutParams = LinearLayout.LayoutParams(0, 110, 1f)
                       hint = "Search Google or type URL..."
@@ -363,14 +336,12 @@ jobs:
                       setHintTextColor(ThemePrefs.subTextColor(this@WebPrintActivity))
                       setPadding(24, 10, 24, 10)
                   }
-
                   val btnGo = Button(this).apply {
                       layoutParams = LinearLayout.LayoutParams(180, 110).apply { leftMargin = 12 }
                       text = "Go"
                       setBackgroundColor(Color.parseColor("#0288D1"))
                       setTextColor(Color.WHITE)
                   }
-
                   topBar.addView(etUrl)
                   topBar.addView(btnGo)
 
@@ -378,7 +349,6 @@ jobs:
                       layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 8)
                       max = 100
                   }
-
                   val webView = WebView(this).apply {
                       layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f)
                       settings.apply {
@@ -394,9 +364,7 @@ jobs:
                           userAgentString = "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
                       }
                       webChromeClient = object : WebChromeClient() {
-                          override fun onProgressChanged(view: WebView?, newProgress: Int) {
-                              progressBar.progress = newProgress
-                          }
+                          override fun onProgressChanged(view: WebView?, newProgress: Int) { progressBar.progress = newProgress }
                       }
                       webViewClient = object : WebViewClient() {
                           override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
@@ -409,7 +377,6 @@ jobs:
                           }
                       }
                   }
-
                   val btnCapture = Button(this).apply {
                       layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 135)
                       text = "🖨️ Open Web Page in Print Preview"
@@ -418,7 +385,6 @@ jobs:
                       setBackgroundColor(Color.parseColor("#0288D1"))
                       setTextColor(Color.WHITE)
                   }
-
                   root.addView(topBar)
                   root.addView(progressBar)
                   root.addView(webView)
@@ -437,6 +403,11 @@ jobs:
                           webView.loadUrl(finalUrl)
                       }
                   }
-
                   btnGo.setOnClickListener { loadSmartUrl() }
-                  etUrl.set
+                  etUrl.setOnEditorActionListener { _, actionId, _ ->
+                      if (actionId == EditorInfo.IME_ACTION_GO || actionId == EditorInfo.IME_ACTION_DONE) {
+                          loadSmartUrl()
+                          true
+                      } else false
+                  }
+       
