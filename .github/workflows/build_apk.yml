@@ -1,4 +1,4 @@
-name: Build HP319 USB Printer APK
+name: Build HP319 APK
 
 on:
   push:
@@ -11,20 +11,133 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Prepare Project Files
+      - name: Generate Full Android Project
         run: |
-          # Agar user ne seedha ZIP file upload ki hai to use extract karein
+          python3 - << 'EOF'
+          import os
+
+          files = {}
+
+          files["settings.gradle"] = """pluginManagement {
+              repositories {
+                  google()
+                  mavenCentral()
+                  gradlePluginPortal()
+              }
+          }
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+          rootProject.name = "HP319_USB_Printer"
+          include ':app'
+          """
+
+          files["build.gradle"] = """plugins {
+              id 'com.android.application' version '8.2.0' apply false
+              id 'org.jetbrains.kotlin.android' version '1.9.20' apply false
+          }
+          """
+
+          files["gradle.properties"] = """org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
+          android.useAndroidX=true
+          kotlin.code.style=official
+          android.nonTransitiveRClass=true
+          """
+
+          files["app/build.gradle"] = """plugins {
+              id 'com.android.application'
+              id 'org.jetbrains.kotlin.android'
+          }
+
+          android {
+              namespace 'com.example.usbprinterapp'
+              compileSdk 34
+
+              defaultConfig {
+                  applicationId "com.example.usbprinterapp"
+                  minSdk 24
+                  targetSdk 34
+                  versionCode 1
+                  versionName "1.0"
+              }
+
+              buildTypes {
+                  release {
+                      minifyEnabled false
+                  }
+              }
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_17
+                  targetCompatibility JavaVersion.VERSION_17
+              }
+              kotlinOptions {
+                  jvmTarget = '17'
+              }
+          }
+
+          dependencies {
+              implementation 'androidx.core:core-ktx:1.12.0'
+              implementation 'androidx.appcompat:appcompat:1.6.1'
+              implementation 'com.google.android.material:material:1.11.0'
+              implementation 'androidx.print:print:1.0.0'
+          }
+          """
+
+          files["app/src/main/AndroidManifest.xml"] = """<?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <uses-feature android:name="android.hardware.usb.host" android:required="true" />
+              <uses-permission android:name="android.permission.INTERNET" />
+              <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+              <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+
+              <application
+                  android:allowBackup="true"
+                  android:label="HP 319 USB Print"
+                  android:supportsRtl="true"
+                  android:theme="@style/Theme.AppCompat.NoActionBar">
+
+                  <activity android:name=".PrintPreviewActivity" android:exported="false" />
+                  <activity android:name=".WebPrintActivity" android:exported="false" />
+
+                  <activity android:name=".MainActivity" android:exported="true">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                      <intent-filter>
+                          <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
+                      </intent-filter>
+                      <meta-data
+                          android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
+                          android:resource="@xml/usb_device_filter" />
+                  </activity>
+              </application>
+          </manifest>
+          """
+
+          files["app/src/main/res/xml/usb_device_filter.xml"] = """<?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <usb-device class="7" />
+              <usb-device vendor-id="1008" />
+          </resources>
+          """
+
+          for path, text in files.items():
+              if not os.path.exists(path):
+                  os.makedirs(os.path.dirname(path) if os.path.dirname(path) else ".", exist_ok=True)
+                  with open(path, "w") as f:
+                      f.write(text)
+          EOF
           if [ -f "HP319_USB_OTG_Printer_Full_Project.zip" ]; then
             unzip -o HP319_USB_OTG_Printer_Full_Project.zip
           fi
-          # Agar files kisi subfolder ke andar hain to unhe bahar layein
           if [ -d "HP319_USB_Printer_App" ]; then
             cp -r HP319_USB_Printer_App/* .
           fi
-          if [ -d "HP319_USB_OTG_Printer_Full_Project" ]; then
-            cp -r HP319_USB_OTG_Printer_Full_Project/* .
-          fi
-          ls -la
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -45,4 +158,4 @@ jobs:
         with:
           name: HP319-USB-Printer-APK
           path: app/build/outputs/apk/debug/app-debug.apk
-
+          
