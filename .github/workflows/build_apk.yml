@@ -8,60 +8,83 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Generate Modified App Project
+      - name: Clean Workspace & Generate Project
         run: |
-          python3 - << 'EOF'
+          rm -rf * .[^.]* 2>/dev/null || true
+          cat << ' PYEOF' > generate.py
           import os
 
-          os.makedirs("app/src/main/res/drawable", exist_ok=True)
-          os.makedirs("app/src/main/res/xml", exist_ok=True)
-          os.makedirs("app/src/main/res/values", exist_ok=True)
-          os.makedirs("app/src/main/java/com/example/printershareusb", exist_ok=True)
+          def write_file(path, content):
+              d = os.path.dirname(path)
+              if d:
+                  os.makedirs(d, exist_ok=True)
+              with open(path, "w", encoding="utf-8") as f:
+                  f.write(content.strip() + "\n")
 
-          with open("settings.gradle", "w") as f:
-              f.write("""pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
-          dependencyResolutionManagement { repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS) repositories { google(); mavenCentral() } }
-          rootProject.name = "PrinterShareUSB"
+          write_file("settings.gradle", """
+          pluginManagement {
+              repositories {
+                  google()
+                  mavenCentral()
+                  gradlePluginPortal()
+              }
+          }
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+          rootProject.name = "PrinterShare_USB_Edition"
           include ':app'
           """)
 
-          with open("build.gradle", "w") as f:
-              f.write("""plugins {
+          write_file("build.gradle", """
+          plugins {
               id 'com.android.application' version '8.2.0' apply false
               id 'org.jetbrains.kotlin.android' version '1.9.20' apply false
           }
           """)
 
-          with open("gradle.properties", "w") as f:
-              f.write("org.gradle.jvmargs=-Xmx2048m\nandroid.useAndroidX=true\n")
+          write_file("gradle.properties", """
+          org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
+          android.useAndroidX=true
+          android.nonTransitiveRClass=true
+          """)
 
-          with open("app/build.gradle", "w") as f:
-              f.write("""plugins {
+          write_file("app/build.gradle", """
+          plugins {
               id 'com.android.application'
               id 'org.jetbrains.kotlin.android'
           }
+
           android {
               namespace 'com.example.printershareusb'
               compileSdk 34
+
               defaultConfig {
                   applicationId "com.example.printershareusb"
                   minSdk 24
                   targetSdk 34
-                  versionCode 1
-                  versionName "1.0"
+                  versionCode 2
+                  versionName "2.0"
               }
+
               buildTypes {
-                  release { minifyEnabled false }
+                  release {
+                      minifyEnabled false
+                  }
               }
               compileOptions {
                   sourceCompatibility JavaVersion.VERSION_17
                   targetCompatibility JavaVersion.VERSION_17
               }
-              kotlinOptions { jvmTarget = '17' }
+              kotlinOptions {
+                  jvmTarget = '17'
+              }
           }
+
           dependencies {
               implementation 'androidx.core:core-ktx:1.12.0'
               implementation 'androidx.appcompat:appcompat:1.6.1'
@@ -70,9 +93,10 @@ jobs:
           }
           """)
 
-          with open("app/src/main/AndroidManifest.xml", "w") as f:
-              f.write("""<?xml version="1.0" encoding="utf-8"?>
+          write_file("app/src/main/AndroidManifest.xml", """
+          <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
               <uses-feature android:name="android.hardware.usb.host" android:required="true" />
               <uses-permission android:name="android.permission.INTERNET" />
               <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -82,10 +106,11 @@ jobs:
               <application
                   android:allowBackup="true"
                   android:label="PrinterShare USB Edition"
-                  android:icon="@drawable/ic_app_logo"
-                  android:roundIcon="@drawable/ic_app_logo"
+                  android:icon="@drawable/ic_launcher_printer"
+                  android:roundIcon="@drawable/ic_launcher_printer"
+                  android:usesCleartextTraffic="true"
                   android:supportsRtl="true"
-                  android:theme="@style/Theme.AppCompat.NoActionBar">
+                  android:theme="@style/Theme.AppCompat.DayNight.NoActionBar">
 
                   <activity android:name=".PrintPreviewActivity" android:exported="false" />
                   <activity android:name=".WebPrintActivity" android:exported="false" />
@@ -106,26 +131,57 @@ jobs:
           </manifest>
           """)
 
-          with open("app/src/main/res/xml/usb_device_filter.xml", "w") as f:
-              f.write("""<?xml version="1.0" encoding="utf-8"?>
+          write_file("app/src/main/res/xml/usb_device_filter.xml", """
+          <?xml version="1.0" encoding="utf-8"?>
           <resources>
               <usb-device class="7" />
               <usb-device vendor-id="1008" />
           </resources>
           """)
 
-          with open("app/src/main/res/drawable/ic_app_logo.xml", "w") as f:
-              f.write("""<vector xmlns:android="http://schemas.android.com/apk/res/android"
-                  android:width="108dp"
-                  android:height="108dp"
-                  android:viewportWidth="24"
-                  android:viewportHeight="24">
-                <path android:fillColor="#0099CC" android:pathData="M19,8H5C3.34,8 2,9.34 2,11v6h4v4h12v-4h4v-6C22,9.34 20.66,8 19,8zM16,19H8v-5h8V19zM19,12c-0.55,0 -1,-0.45 -1,-1s0.45,-1 1,-1 1,0.45 1,1 -0.45,1 -1,1zM18,3H6v3h12V3z"/>
-              </vector>
+          write_file("app/src/main/res/drawable/ic_launcher_printer.xml", """
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="108dp"
+              android:height="108dp"
+              android:viewportWidth="108"
+              android:viewportHeight="108">
+              <path
+                  android:fillColor="#0288D1"
+                  android:pathData="M0,0h108v108h-108z" />
+              <path
+                  android:fillColor="#01579B"
+                  android:pathData="M18,18h72v72h-72z" />
+              <path
+                  android:fillColor="#FFFFFF"
+                  android:pathData="M74,42H34c-4.4,0 -8,3.6 -8,8v18h10v14h36V68h10V50C82,45.6 78.4,42 74,42zM66,76H42V60h24V76zM74,53c-1.7,0 -3,-1.3 -3,-3s1.3,-3 3,-3s3,1.3 3,3S75.7,53 74,53zM70,26H38v12h32V26z" />
+          </vector>
           """)
 
-          with open("app/src/main/java/com/example/printershareusb/UsbPrinterHelper.kt", "w") as f:
-              f.write("""package com.example.printershareusb
+          write_file("app/src/main/java/com/example/printershareusb/ThemePrefs.kt", """
+          package com.example.printershareusb
+
+          import android.content.Context
+          import android.graphics.Color
+
+          object ThemePrefs {
+              fun isDark(ctx: Context): Boolean {
+                  return ctx.getSharedPreferences("ui_prefs", Context.MODE_PRIVATE).getBoolean("dark", true)
+              }
+              fun toggle(ctx: Context) {
+                  val cur = isDark(ctx)
+                  ctx.getSharedPreferences("ui_prefs", Context.MODE_PRIVATE).edit().putBoolean("dark", !cur).apply()
+              }
+              fun bgColor(ctx: Context) = if (isDark(ctx)) Color.parseColor("#0D1117") else Color.parseColor("#F4F6F9")
+              fun cardColor(ctx: Context) = if (isDark(ctx)) Color.parseColor("#161B22") else Color.parseColor("#FFFFFF")
+              fun barColor(ctx: Context) = if (isDark(ctx)) Color.parseColor("#161B22") else Color.parseColor("#E5E9F0")
+              fun textColor(ctx: Context) = if (isDark(ctx)) Color.parseColor("#FFFFFF") else Color.parseColor("#1C1E21")
+              fun subTextColor(ctx: Context) = if (isDark(ctx)) Color.parseColor("#8B949E") else Color.parseColor("#57606A")
+          }
+          """)
+
+          write_file("app/src/main/java/com/example/printershareusb/UsbPrinterHelper.kt", """
+          package com.example.printershareusb
+
           import android.app.PendingIntent
           import android.content.Context
           import android.content.Intent
@@ -137,37 +193,48 @@ jobs:
 
           class UsbPrinterHelper(private val context: Context) {
               val usbManager: UsbManager = context.getSystemService(Context.USB_SERVICE) as UsbManager
+
               companion object {
                   const val ACTION_USB_PERMISSION = "com.example.printershareusb.USB_PERMISSION"
                   var selectedPrinterName: String = "Not selected"
                   var connectedUsbDevice: UsbDevice? = null
               }
+
               fun findUsbPrinter(): UsbDevice? {
                   for (device in usbManager.deviceList.values) {
                       if (device.vendorId == 1008 || device.deviceClass == UsbConstants.USB_CLASS_PRINTER) {
                           connectedUsbDevice = device
-                          selectedPrinterName = device.productName ?: "HP Ink Tank 319 (USB)"
+                          selectedPrinterName = device.productName ?: "HP Ink Tank 319 (USB OTG)"
                           return device
                       }
                       for (i in 0 until device.interfaceCount) {
                           if (device.getInterface(i).interfaceClass == UsbConstants.USB_CLASS_PRINTER) {
                               connectedUsbDevice = device
-                              selectedPrinterName = device.productName ?: "HP Ink Tank 319 (USB)"
+                              selectedPrinterName = device.productName ?: "HP Ink Tank 319 (USB OTG)"
                               return device
                           }
                       }
                   }
                   return null
               }
+
               fun requestPermission(device: UsbDevice) {
                   val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) PendingIntent.FLAG_MUTABLE else 0
                   val pi = PendingIntent.getBroadcast(context, 0, Intent(ACTION_USB_PERMISSION), flags)
                   usbManager.requestPermission(device, pi)
               }
+
               fun sendRawUsbPrintJob(bmp: Bitmap, onResult: (Boolean, String) -> Unit) {
                   val dev = connectedUsbDevice ?: findUsbPrinter()
-                  if (dev == null) { onResult(false, "USB Printer connected nahi hai!"); return }
-                  if (!usbManager.hasPermission(dev)) { requestPermission(dev); onResult(false, "USB Permission allow karein."); return }
+                  if (dev == null) {
+                      onResult(false, "USB OTG Printer connect nahi hai! Phone ki Settings me OTG ON karein.")
+                      return
+                  }
+                  if (!usbManager.hasPermission(dev)) {
+                      requestPermission(dev)
+                      onResult(false, "USB Permission popup ko Allow karein aur dobara Print dabayein.")
+                      return
+                  }
                   Thread {
                       var conn: UsbDeviceConnection? = null
                       var intf: UsbInterface? = null
@@ -178,12 +245,17 @@ jobs:
                               for (j in 0 until itf.endpointCount) {
                                   val ep = itf.getEndpoint(j)
                                   if (ep.type == UsbConstants.USB_ENDPOINT_XFER_BULK && ep.direction == UsbConstants.USB_DIR_OUT) {
-                                      intf = itf; epOut = ep; break
+                                      intf = itf
+                                      epOut = ep
+                                      break
                                   }
                               }
                               if (epOut != null) break
                           }
-                          if (intf == null || epOut == null) { onResult(false, "Endpoint nahi mila!"); return@Thread }
+                          if (intf == null || epOut == null) {
+                              onResult(false, "Printer Bulk Endpoint nahi mila!")
+                              return@Thread
+                          }
                           conn = usbManager.openDevice(dev)
                           conn.claimInterface(intf, true)
                           val data = encodeToPcl(bmp)
@@ -191,191 +263,180 @@ jobs:
                           while (offset < data.size) {
                               val len = minOf(16384, data.size - offset)
                               val chunk = data.copyOfRange(offset, offset + len)
-                              conn.bulkTransfer(epOut, chunk, chunk.size, 8000)
+                              val sent = conn.bulkTransfer(epOut, chunk, chunk.size, 8000)
+                              if (sent < 0) throw Exception("Transfer interrupted")
                               offset += len
                           }
-                          onResult(true, "Print Job Sent Successfully!")
+                          onResult(true, "Print Job Sent to HP Ink Tank 319!")
                       } catch (e: Exception) {
-                          onResult(false, "Error: " + e.message)
+                          onResult(false, "USB Print Error: " + e.message)
                       } finally {
-                          try { if (intf != null) conn?.releaseInterface(intf); conn?.close() } catch(_:Exception){}
+                          try {
+                              if (intf != null) conn?.releaseInterface(intf)
+                              conn?.close()
+                          } catch (_: Exception) {}
                       }
                   }.start()
               }
+
               private fun encodeToPcl(bmp: Bitmap): ByteArray {
                   val out = ByteArrayOutputStream()
-                  out.write("\\u001B%-12345X@PJL\\r\\n\\u001BE\\u001B*t150R\\u001B*r1A".toByteArray())
-                  val w = bmp.width; val h = bmp.height
+                  val esc = 27.toByte()
+                  out.write(byteArrayOf(esc))
+                  out.write("%-12345X@PJL\r\n@PJL ENTER LANGUAGE = PCL\r\n".toByteArray())
+                  out.write(byteArrayOf(esc))
+                  out.write("E".toByteArray())
+                  out.write(byteArrayOf(esc))
+                  out.write("*t150R".toByteArray())
+                  out.write(byteArrayOf(esc))
+                  out.write("*r1A".toByteArray())
+
+                  val w = bmp.width
+                  val h = bmp.height
                   val rowBytes = (w + 7) / 8
                   val buf = ByteArray(rowBytes)
                   for (y in 0 until h) {
                       Arrays.fill(buf, 0.toByte())
                       for (x in 0 until w) {
                           val p = bmp.getPixel(x, y)
-                          val lum = (0.299*((p shr 16) and 0xFF) + 0.587*((p shr 8) and 0xFF) + 0.114*(p and 0xFF)).toInt()
-                          if (lum < 165) buf[x/8] = (buf[x/8].toInt() or (1 shl (7 - (x%8)))).toByte()
+                          val lum = (0.299 * ((p shr 16) and 0xFF) + 0.587 * ((p shr 8) and 0xFF) + 0.114 * (p and 0xFF)).toInt()
+                          if (lum < 165) {
+                              buf[x / 8] = (buf[x / 8].toInt() or (1 shl (7 - (x % 8)))).toByte()
+                          }
                       }
-                      out.write("\\u001B*b0M\\u001B*b".toByteArray())
-                      out.write(rowBytes.toString().toByteArray())
-                      out.write("W".toByteArray())
+                      out.write(byteArrayOf(esc))
+                      out.write(("*b0M").toByteArray())
+                      out.write(byteArrayOf(esc))
+                      out.write(("*b" + rowBytes.toString() + "W").toByteArray())
                       out.write(buf)
                   }
-                  out.write("\\u001B*rB\\u000C\\u001BE".toByteArray())
+                  out.write(byteArrayOf(esc))
+                  out.write("*rB\u000C".toByteArray())
+                  out.write(byteArrayOf(esc))
+                  out.write("E".toByteArray())
                   return out.toByteArray()
               }
           }
           """)
 
-          with open("app/src/main/java/com/example/printershareusb/WebPrintActivity.kt", "w") as f:
-              f.write("""package com.example.printershareusb
+          write_file("app/src/main/java/com/example/printershareusb/WebPrintActivity.kt", """
+          package com.example.printershareusb
+
           import android.content.Intent
           import android.graphics.Bitmap
           import android.graphics.Canvas
+          import android.graphics.Color
           import android.os.Bundle
-          import android.webkit.WebView
-          import android.webkit.WebViewClient
-          import android.widget.Button
-          import android.widget.EditText
+          import android.view.Gravity
+          import android.view.inputmethod.EditorInfo
+          import android.webkit.*
+          import android.widget.*
           import androidx.appcompat.app.AppCompatActivity
+
           class WebPrintActivity : AppCompatActivity() {
-              companion object { var capturedWebBitmap: Bitmap? = null }
+              companion object {
+                  var capturedWebBitmap: Bitmap? = null
+              }
+
               override fun onCreate(savedInstanceState: Bundle?) {
                   super.onCreate(savedInstanceState)
-                  val root = android.widget.RelativeLayout(this)
-                  val topBar = android.widget.LinearLayout(this).apply {
-                      id = android.view.View.generateViewId()
-                      orientation = android.widget.LinearLayout.HORIZONTAL
-                      setPadding(12, 12, 12, 12)
+
+                  val root = LinearLayout(this).apply {
+                      orientation = LinearLayout.VERTICAL
+                      setBackgroundColor(ThemePrefs.bgColor(this@WebPrintActivity))
                   }
+
+                  val topBar = LinearLayout(this).apply {
+                      orientation = LinearLayout.HORIZONTAL
+                      setPadding(16, 14, 16, 14)
+                      setBackgroundColor(ThemePrefs.barColor(this@WebPrintActivity))
+                      gravity = Gravity.CENTER_VERTICAL
+                  }
+
                   val etUrl = EditText(this).apply {
-                      layoutParams = android.widget.LinearLayout.LayoutParams(0, android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 1f)
-                      setText("https://www.wikipedia.org")
+                      layoutParams = LinearLayout.LayoutParams(0, 110, 1f)
+                      hint = "Search Google or type URL..."
+                      setText("https://www.google.com")
+                      setSingleLine(true)
+                      imeOptions = EditorInfo.IME_ACTION_GO
+                      setTextColor(ThemePrefs.textColor(this@WebPrintActivity))
+                      setHintTextColor(ThemePrefs.subTextColor(this@WebPrintActivity))
+                      setPadding(24, 10, 24, 10)
                   }
+
                   val btnGo = Button(this).apply {
-                      layoutParams = android.widget.LinearLayout.LayoutParams(140, android.widget.LinearLayout.LayoutParams.MATCH_PARENT)
+                      layoutParams = LinearLayout.LayoutParams(180, 110).apply { leftMargin = 12 }
                       text = "Go"
+                      setBackgroundColor(Color.parseColor("#0288D1"))
+                      setTextColor(Color.WHITE)
                   }
+
                   topBar.addView(etUrl)
                   topBar.addView(btnGo)
 
-                  val webView = WebView(this).apply {
-                      id = android.view.View.generateViewId()
-                      settings.javaScriptEnabled = true
-                      webViewClient = WebViewClient()
-                      loadUrl(etUrl.text.toString())
+                  val progressBar = ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply {
+                      layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 8)
+                      max = 100
                   }
-                  val webParams = android.widget.RelativeLayout.LayoutParams(android.widget.RelativeLayout.LayoutParams.MATCH_PARENT, android.widget.RelativeLayout.LayoutParams.MATCH_PARENT)
-                  webParams.addRule(android.widget.RelativeLayout.BELOW, topBar.id)
-                  webParams.addRule(android.widget.RelativeLayout.ABOVE, 12345)
-                  webView.layoutParams = webParams
+
+                  val webView = WebView(this).apply {
+                      layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f)
+                      settings.apply {
+                          javaScriptEnabled = true
+                          domStorageEnabled = true
+                          databaseEnabled = true
+                          loadsImagesAutomatically = true
+                          useWideViewPort = true
+                          loadWithOverviewMode = true
+                          builtInZoomControls = true
+                          displayZoomControls = false
+                          mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+                          userAgentString = "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
+                      }
+                      webChromeClient = object : WebChromeClient() {
+                          override fun onProgressChanged(view: WebView?, newProgress: Int) {
+                              progressBar.progress = newProgress
+                          }
+                      }
+                      webViewClient = object : WebViewClient() {
+                          override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+                              val u = request?.url?.toString() ?: return false
+                              if (u.startsWith("http://") || u.startsWith("https://")) {
+                                  etUrl.setText(u)
+                                  return false
+                              }
+                              return true
+                          }
+                      }
+                  }
 
                   val btnCapture = Button(this).apply {
-                      id = 12345
-                      layoutParams = android.widget.RelativeLayout.LayoutParams(android.widget.RelativeLayout.LayoutParams.MATCH_PARENT, 140).apply {
-                          addRule(android.widget.RelativeLayout.ALIGN_PARENT_BOTTOM)
-                      }
-                      text = "Open in Print Preview"
+                      layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 135)
+                      text = "🖨️ Open Web Page in Print Preview"
+                      isAllCaps = false
+                      textSize = 16f
+                      setBackgroundColor(Color.parseColor("#0288D1"))
+                      setTextColor(Color.WHITE)
                   }
 
                   root.addView(topBar)
+                  root.addView(progressBar)
                   root.addView(webView)
                   root.addView(btnCapture)
                   setContentView(root)
 
-                  btnGo.setOnClickListener {
-                      var url = etUrl.text.toString().trim()
-                      if (!url.startsWith("http")) url = "https://" + url
-                      webView.loadUrl(url)
-                  }
-                  btnCapture.setOnClickListener {
-                      val bmp = Bitmap.createBitmap(webView.width.coerceAtLeast(100), webView.height.coerceAtLeast(100), Bitmap.Config.ARGB_8888)
-                      webView.draw(Canvas(bmp))
-                      capturedWebBitmap = bmp
-                      startActivity(Intent(this, PrintPreviewActivity::class.java).putExtra("FROM_WEB", true))
-                  }
-              }
-          }
-          """)
-
-          with open("app/src/main/java/com/example/printershareusb/PrintPreviewActivity.kt", "w") as f:
-              f.write("""package com.example.printershareusb
-          import android.app.AlertDialog
-          import android.graphics.*
-          import android.net.Uri
-          import android.os.Bundle
-          import android.widget.*
-          import androidx.appcompat.app.AppCompatActivity
-          import androidx.print.PrintHelper
-
-          class PrintPreviewActivity : AppCompatActivity() {
-              private var renderedBitmap: Bitmap? = null
-              private val sourceBmps = mutableListOf<Bitmap>()
-              private var pictureSize = "4x6 (10x15 cm)"
-              private var pictureScaling = "Crop"
-              private var pictureAlign = "Center"
-              private var pageMargins = "Normal"
-              private var pageOrientation = "Auto"
-
-              override fun onCreate(savedInstanceState: Bundle?) {
-                  super.onCreate(savedInstanceState)
-                  setContentView(R.layout.activity_print_preview)
-
-                  val uriList = intent.getStringArrayListExtra("FILE_URIS")
-                  val textContent = intent.getStringExtra("TEXT_CONTENT")
-
-                  if (WebPrintActivity.capturedWebBitmap != null && intent.getBooleanExtra("FROM_WEB", false)) {
-                      sourceBmps.add(WebPrintActivity.capturedWebBitmap!!)
-                      pictureSize = "Fit to page"; pictureScaling = "Inside"
-                  } else if (textContent != null) {
-                      sourceBmps.add(createBmpFromText(textContent))
-                      pictureSize = "Fit to page"; pictureScaling = "Inside"
-                  } else if (!uriList.isNullOrEmpty()) {
-                      for (u in uriList) {
-                          try { contentResolver.openInputStream(Uri.parse(u))?.use { sourceBmps.add(BitmapFactory.decodeStream(it)) } } catch(_:Exception){}
-                      }
-                  }
-
-                  findViewById<Button>(R.id.btnOptions).setOnClickListener { showOptionsDialog() }
-                  findViewById<Button>(R.id.btnPrint).setOnClickListener {
-                      renderedBitmap?.let { bmp ->
-                          val helper = PrintHelper(this)
-                          helper.scaleMode = PrintHelper.SCALE_MODE_FIT
-                          helper.printBitmap("PrinterShare_Print", bmp)
-                      }
-                  }
-                  renderCanvas()
-              }
-
-              private fun showOptionsDialog() {
-                  val items = arrayOf("Picture Size: " + pictureSize, "Picture Scaling: " + pictureScaling, "Picture Align: " + pictureAlign, "Page Margins: " + pageMargins, "Page Orientation: " + pageOrientation)
-                  AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                      .setTitle("Print Options")
-                      .setItems(items) { _, which ->
-                          when(which) {
-                              0 -> showSingle("Picture Size", arrayOf("Fit to page", "4x6 (10x15 cm)", "5x7 (13x18 cm)", "8x10 (20x25 cm)"), pictureSize) { pictureSize = it; renderCanvas() }
-                              1 -> showSingle("Picture Scaling", arrayOf("Crop", "Inside"), pictureScaling) { pictureScaling = it; renderCanvas() }
-                              2 -> showSingle("Picture Align", arrayOf("Center", "Top Left", "Top Right", "Bottom Left", "Bottom Right"), pictureAlign) { pictureAlign = it; renderCanvas() }
-                              3 -> showSingle("Page Margins", arrayOf("No (minimum allowable)", "Small", "Normal", "Large"), pageMargins) { pageMargins = it; renderCanvas() }
-                              4 -> showSingle("Page Orientation", arrayOf("Auto", "Portrait", "Landscape"), pageOrientation) { pageOrientation = it; renderCanvas() }
+                  val loadSmartUrl = {
+                      val raw = etUrl.text.toString().trim()
+                      if (raw.isNotEmpty()) {
+                          val finalUrl = when {
+                              raw.startsWith("http://") || raw.startsWith("https://") -> raw
+                              raw.contains(".") && !raw.contains(" ") -> "https://" + raw
+                              else -> "https://www.google.com/search?q=" + android.net.Uri.encode(raw)
                           }
-                      }.show()
-              }
+                          etUrl.setText(finalUrl)
+                          webView.loadUrl(finalUrl)
+                      }
+                  }
 
-              private fun showSingle(title: String, opts: Array<String>, curr: String, cb: (String) -> Unit) {
-                  val idx = opts.indexOf(curr).coerceAtLeast(0)
-                  AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                      .setTitle(title).setSingleChoiceItems(opts, idx) { d, w -> cb(opts[w]); d.dismiss() }.show()
-              }
-
-              private fun renderCanvas() {
-                  if (sourceBmps.isEmpty()) return
-                  val bmp = sourceBmps[0]
-                  val isLandscape = when(pageOrientation) { "Landscape" -> true; "Portrait" -> false; else -> bmp.width > bmp.height }
-                  val pW = if(isLandscape) 1650 else 1275; val pH = if(isLandscape) 1275 else 1650
-                  val sheet = Bitmap.createBitmap(pW, pH, Bitmap.Config.ARGB_8888)
-                  val canvas = Canvas(sheet); canvas.drawColor(Color.WHITE)
-
-                  val m = when(pageMargins) { "No (minimum allowable)" -> 0; "Small" -> 36; "Large" -> 135; else -> 75 }
-                  val aW = pW - (m * 2); val aH = pH - (m * 2)
-
-                  var (
+                  btnGo.setOnClickListener { loadSmartUrl() }
+                  etUrl.set
