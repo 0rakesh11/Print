@@ -8,885 +8,900 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Generate Project Files
+      - name: Generate Complete Android Project
         run: |
           rm -rf * .[^.]* 2>/dev/null || true
-          python3 - << 'EOF'
+          cat << 'EOF' > make_project.py
           import os
 
-          def w(p, c):
-              if os.path.dirname(p):
-                  os.makedirs(os.path.dirname(p), exist_ok=True)
+          def w(p, lines):
+              d = os.path.dirname(p)
+              if d:
+                  os.makedirs(d, exist_ok=True)
               with open(p, "w", encoding="utf-8") as f:
-                  f.write(c.strip() + "\n")
+                  f.write("\n".join(lines) + "\n")
 
-          w("settings.gradle", """
-          pluginManagement {
-              repositories {
-                  google()
-                  mavenCentral()
-                  gradlePluginPortal()
-              }
-          }
-          dependencyResolutionManagement {
-              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-              repositories {
-                  google()
-                  mavenCentral()
-              }
-          }
-          rootProject.name = "PrinterShare_USB_Edition"
-          include ':app'
-          """)
+          w("settings.gradle", [
+              "pluginManagement {",
+              "    repositories { google(); mavenCentral(); gradlePluginPortal() }",
+              "}",
+              "dependencyResolutionManagement {",
+              "    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)",
+              "    repositories { google(); mavenCentral() }",
+              "}",
+              "rootProject.name = 'PrinterShare_USB_Edition'",
+              "include ':app'"
+          ])
 
-          w("build.gradle", """
-          plugins {
-              id 'com.android.application' version '8.2.0' apply false
-              id 'org.jetbrains.kotlin.android' version '1.9.20' apply false
-          }
-          """)
+          w("build.gradle", [
+              "plugins {",
+              "    id 'com.android.application' version '8.2.0' apply false",
+              "    id 'org.jetbrains.kotlin.android' version '1.9.20' apply false",
+              "}"
+          ])
 
-          w("gradle.properties", """
-          org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
-          android.useAndroidX=true
-          android.nonTransitiveRClass=true
-          """)
+          w("gradle.properties", [
+              "org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8",
+              "android.useAndroidX=true",
+              "android.nonTransitiveRClass=true"
+          ])
 
-          w("app/build.gradle", """
-          plugins {
-              id 'com.android.application'
-              id 'org.jetbrains.kotlin.android'
-          }
-          android {
-              namespace 'com.example.printershareusb'
-              compileSdk 34
-              defaultConfig {
-                  applicationId 'com.example.printershareusb'
-                  minSdk 24
-                  targetSdk 34
-                  versionCode 5
-                  versionName '5.0'
-                  setProperty('archivesBaseName', 'PrinterShare_USB_Edition')
-              }
-              compileOptions {
-                  sourceCompatibility JavaVersion.VERSION_17
-                  targetCompatibility JavaVersion.VERSION_17
-              }
-              kotlinOptions { jvmTarget = '17' }
-          }
-          dependencies {
-              implementation 'androidx.core:core-ktx:1.12.0'
-              implementation 'androidx.appcompat:appcompat:1.6.1'
-              implementation 'com.google.android.material:material:1.11.0'
-              implementation 'androidx.print:print:1.0.0'
-          }
-          """)
+          w("app/build.gradle", [
+              "plugins {",
+              "    id 'com.android.application'",
+              "    id 'org.jetbrains.kotlin.android'",
+              "}",
+              "android {",
+              "    namespace 'com.example.printershareusb'",
+              "    compileSdk 34",
+              "    defaultConfig {",
+              "        applicationId 'com.example.printershareusb'",
+              "        minSdk 24",
+              "        targetSdk 34",
+              "        versionCode 6",
+              "        versionName '6.0'",
+              "    }",
+              "    compileOptions {",
+              "        sourceCompatibility JavaVersion.VERSION_17",
+              "        targetCompatibility JavaVersion.VERSION_17",
+              "    }",
+              "    kotlinOptions { jvmTarget = '17' }",
+              "}",
+              "dependencies {",
+              "    implementation 'androidx.core:core-ktx:1.12.0'",
+              "    implementation 'androidx.appcompat:appcompat:1.6.1'",
+              "    implementation 'com.google.android.material:material:1.11.0'",
+              "    implementation 'androidx.print:print:1.0.0'",
+              "}"
+          ])
 
-          w("app/src/main/AndroidManifest.xml", """
-          <?xml version="1.0" encoding="utf-8"?>
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-              <uses-feature android:name="android.hardware.usb.host" android:required="true" />
-              <uses-permission android:name="android.permission.INTERNET" />
-              <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-              <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
-              <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+          w("app/src/main/AndroidManifest.xml", [
+              "<?xml version='1.0' encoding='utf-8'?>",
+              "<manifest xmlns:android='http://schemas.android.com/apk/res/android'>",
+              "    <uses-feature android:name='android.hardware.usb.host' android:required='true' />",
+              "    <uses-permission android:name='android.permission.INTERNET' />",
+              "    <uses-permission android:name='android.permission.ACCESS_NETWORK_STATE' />",
+              "    <uses-permission android:name='android.permission.READ_EXTERNAL_STORAGE' android:maxSdkVersion='32' />",
+              "    <uses-permission android:name='android.permission.READ_MEDIA_IMAGES' />",
+              "    <application",
+              "        android:allowBackup='true'",
+              "        android:label='PrinterShare USB Edition'",
+              "        android:icon='@drawable/ic_launcher_printer'",
+              "        android:roundIcon='@drawable/ic_launcher_printer'",
+              "        android:usesCleartextTraffic='true'",
+              "        android:supportsRtl='true'",
+              "        android:theme='@style/Theme.AppCompat.DayNight.NoActionBar'>",
+              "        <activity android:name='.PrintPreviewActivity' android:exported='false' />",
+              "        <activity android:name='.WebPrintActivity' android:exported='false' />",
+              "        <activity android:name='.MainActivity' android:exported='true'>",
+              "            <intent-filter>",
+              "                <action android:name='android.intent.action.MAIN' />",
+              "                <category android:name='android.intent.category.LAUNCHER' />",
+              "            </intent-filter>",
+              "            <intent-filter>",
+              "                <action android:name='android.hardware.usb.action.USB_DEVICE_ATTACHED' />",
+              "            </intent-filter>",
+              "            <meta-data android:name='android.hardware.usb.action.USB_DEVICE_ATTACHED' android:resource='@xml/usb_device_filter' />",
+              "        </activity>",
+              "    </application>",
+              "</manifest>"
+          ])
 
-              <application
-                  android:allowBackup="true"
-                  android:label="PrinterShare USB Edition"
-                  android:icon="@drawable/ic_launcher_printer"
-                  android:roundIcon="@drawable/ic_launcher_printer"
-                  android:usesCleartextTraffic="true"
-                  android:supportsRtl="true"
-                  android:theme="@style/Theme.AppCompat.DayNight.NoActionBar">
+          w("app/src/main/res/xml/usb_device_filter.xml", [
+              "<?xml version='1.0' encoding='utf-8'?>",
+              "<resources>",
+              "    <usb-device class='7' />",
+              "    <usb-device vendor-id='1008' />",
+              "</resources>"
+          ])
 
-                  <activity android:name=".PrintPreviewActivity" android:exported="false" />
-                  <activity android:name=".WebPrintActivity" android:exported="false" />
+          # App Logo Icon
+          w("app/src/main/res/drawable/ic_launcher_printer.xml", [
+              "<vector xmlns:android='http://schemas.android.com/apk/res/android' android:width='108dp' android:height='108dp' android:viewportWidth='108' android:viewportHeight='108'>",
+              "    <path android:fillColor='#0288D1' android:pathData='M0,0h108v108h-108z'/>",
+              "    <path android:fillColor='#01579B' android:pathData='M14,14h80v80h-80z'/>",
+              "    <path android:fillColor='#FFFFFF' android:pathData='M74,42H34c-4.4,0 -8,3.6 -8,8v18h10v14h36V68h10V50C82,45.6 78.4,42 74,42zM66,76H42V60h24V76zM74,53c-1.7,0 -3,-1.3 -3,-3s1.3,-3 3,-3s3,1.3 3,3S75.7,53 74,53zM70,26H38v12h32V26z'/>",
+              "</vector>"
+          ])
 
-                  <activity android:name=".MainActivity" android:exported="true">
-                      <intent-filter>
-                          <action android:name="android.intent.action.MAIN" />
-                          <category android:name="android.intent.category.LAUNCHER" />
-                      </intent-filter>
-                      <intent-filter>
-                          <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
-                      </intent-filter>
-                      <meta-data android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" android:resource="@xml/usb_device_filter" />
-                  </activity>
-              </application>
-          </manifest>
-          """)
+          # Vector Icons for Dashboard Cards
+          w("app/src/main/res/drawable/ic_pic.xml", [
+              "<vector xmlns:android='http://schemas.android.com/apk/res/android' android:width='54dp' android:height='54dp' android:viewportWidth='24' android:viewportHeight='24'>",
+              "    <path android:fillColor='#29B6F6' android:pathData='M21,19V5c0,-1.1 -0.9,-2 -2,-2H5c-1.1,0 -2,0.9 -2,2v14c0,1.1 0.9,2 2,2h14c1.1,0 2,-0.9 2,-2zM8.5,13.5l2.5,3.01L14.5,12l4.5,6H5l3.5,-4.5z'/>",
+              "</vector>"
+          ])
 
-          w("app/src/main/res/xml/usb_device_filter.xml", """
-          <?xml version="1.0" encoding="utf-8"?>
-          <resources>
-              <usb-device class="7" />
-              <usb-device vendor-id="1008" />
-          </resources>
-          """)
+          w("app/src/main/res/drawable/ic_doc.xml", [
+              "<vector xmlns:android='http://schemas.android.com/apk/res/android' android:width='54dp' android:height='54dp' android:viewportWidth='24' android:viewportHeight='24'>",
+              "    <path android:fillColor='#FFA726' android:pathData='M14,2H6C4.9,2 4,2.9 4,4v16c0,1.1 0.9,2 2,2h12c1.1,0 2,-0.9 2,-2V8L14,2zM16,18H8v-2h8V18zM16,14H8v-2h8V14zM13,9V3.5L18.5,9H13z'/>",
+              "</vector>"
+          ])
 
-          w("app/src/main/res/drawable/ic_launcher_printer.xml", """
-          <vector xmlns:android="http://schemas.android.com/apk/res/android"
-              android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
-              <path android:fillColor="#0288D1" android:pathData="M0,0h108v108h-108z"/>
-              <path android:fillColor="#01579B" android:pathData="M18,18h72v72h-72z"/>
-              <path android:fillColor="#FFFFFF" android:pathData="M74,42H34c-4.4,0 -8,3.6 -8,8v18h10v14h36V68h10V50C82,45.6 78.4,42 74,42zM66,76H42V60h24V76zM74,53c-1.7,0 -3,-1.3 -3,-3s1.3,-3 3,-3s3,1.3 3,3S75.7,53 74,53zM70,26H38v12h32V26z"/>
-          </vector>
-          """)
+          w("app/src/main/res/drawable/ic_web.xml", [
+              "<vector xmlns:android='http://schemas.android.com/apk/res/android' android:width='54dp' android:height='54dp' android:viewportWidth='24' android:viewportHeight='24'>",
+              "    <path android:fillColor='#66BB6A' android:pathData='M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10,-4.48 10,-10S17.52,2 12,2zM11,19.93c-3.95,-0.49 -7,-3.85 -7,-7.93 0,-0.62 0.08,-1.21 0.21,-1.79L9,15v1c0,1.1 0.9,2 2,2v1.93zM17.9,17.39c-0.26,-0.81 -1,-1.39 -1.9,-1.39h-1v-3c0,-0.55 -0.45,-1 -1,-1H8v-2h2c0.55,0 1,-0.45 1,-1V7h2c1.1,0 2,-0.9 2,-2v-0.41c2.93,1.19 5,4.06 5,7.41 0,2.08 -0.8,3.97 -2.1,5.39z'/>",
+              "</vector>"
+          ])
 
-          w("app/src/main/java/com/example/printershareusb/ThemePrefs.kt", """
-          package com.example.printershareusb
-          import android.content.Context
-          import android.graphics.Color
-          object ThemePrefs {
-              fun isDark(ctx: Context): Boolean = ctx.getSharedPreferences("ui_prefs", Context.MODE_PRIVATE).getBoolean("dark", true)
-              fun toggle(ctx: Context) {
-                  val cur = isDark(ctx)
-                  ctx.getSharedPreferences("ui_prefs", Context.MODE_PRIVATE).edit().putBoolean("dark", !cur).apply()
-              }
-              fun bgColor(ctx: Context) = if (isDark(ctx)) Color.parseColor("#0D1117") else Color.parseColor("#F4F6F9")
-              fun cardColor(ctx: Context) = if (isDark(ctx)) Color.parseColor("#161B22") else Color.parseColor("#FFFFFF")
-              fun barColor(ctx: Context) = if (isDark(ctx)) Color.parseColor("#161B22") else Color.parseColor("#E5E9F0")
-              fun textColor(ctx: Context) = if (isDark(ctx)) Color.parseColor("#FFFFFF") else Color.parseColor("#1C1E21")
-              fun subTextColor(ctx: Context) = if (isDark(ctx)) Color.parseColor("#8B949E") else Color.parseColor("#57606A")
-          }
-          """)
+          w("app/src/main/res/drawable/ic_note.xml", [
+              "<vector xmlns:android='http://schemas.android.com/apk/res/android' android:width='54dp' android:height='54dp' android:viewportWidth='24' android:viewportHeight='24'>",
+              "    <path android:fillColor='#AB47BC' android:pathData='M3,17.25V21h3.75L17.81,9.94l-3.75,-3.75L3,17.25zM20.71,7.04c0.39,-0.39 0.39,-1.02 0,-1.41l-2.34,-2.34c-0.39,-0.39 -1.02,-0.39 -1.41,0l-1.83,1.83 3.75,3.75 1.83,-1.83z'/>",
+              "</vector>"
+          ])
 
-          w("app/src/main/java/com/example/printershareusb/UsbPrinterHelper.kt", """
-          package com.example.printershareusb
-          import android.app.PendingIntent
-          import android.content.Context
-          import android.content.Intent
-          import android.graphics.Bitmap
-          import android.hardware.usb.*
-          import android.os.Build
-          import java.io.ByteArrayOutputStream
-          import java.util.Arrays
+          w("app/src/main/java/com/example/printershareusb/ThemePrefs.kt", [
+              "package com.example.printershareusb",
+              "import android.content.Context",
+              "import android.graphics.Color",
+              "object ThemePrefs {",
+              "    fun isDark(ctx: Context): Boolean = ctx.getSharedPreferences(\"ui_prefs\", Context.MODE_PRIVATE).getBoolean(\"dark\", true)",
+              "    fun toggle(ctx: Context) {",
+              "        val cur = isDark(ctx)",
+              "        ctx.getSharedPreferences(\"ui_prefs\", Context.MODE_PRIVATE).edit().putBoolean(\"dark\", !cur).apply()",
+              "    }",
+              "    fun bgColor(ctx: Context) = if (isDark(ctx)) Color.parseColor(\"#0D1117\") else Color.parseColor(\"#F0F4F8\")",
+              "    fun cardColor(ctx: Context) = if (isDark(ctx)) Color.parseColor(\"#161B22\") else Color.parseColor(\"#FFFFFF\")",
+              "    fun barColor(ctx: Context) = if (isDark(ctx)) Color.parseColor(\"#161B22\") else Color.parseColor(\"#E1E8F0\")",
+              "    fun textColor(ctx: Context) = if (isDark(ctx)) Color.parseColor(\"#FFFFFF\") else Color.parseColor(\"#102A43\")",
+              "    fun subTextColor(ctx: Context) = if (isDark(ctx)) Color.parseColor(\"#8B949E\") else Color.parseColor(\"#486581\")",
+              "}"
+          ])
 
-          class UsbPrinterHelper(private val context: Context) {
-              val usbManager: UsbManager = context.getSystemService(Context.USB_SERVICE) as UsbManager
-              companion object {
-                  const val ACTION_USB_PERMISSION = "com.example.printershareusb.USB_PERMISSION"
-                  var selectedPrinterName: String = "HP Ink Tank 319 (Direct USB OTG)"
-                  var connectedUsbDevice: UsbDevice? = null
-              }
-              fun findUsbPrinter(): UsbDevice? {
-                  for (device in usbManager.deviceList.values) {
-                      if (device.vendorId == 1008 || device.deviceClass == UsbConstants.USB_CLASS_PRINTER) {
-                          connectedUsbDevice = device
-                          selectedPrinterName = device.productName ?: "HP Ink Tank 319 (USB OTG)"
-                          return device
-                      }
-                      for (i in 0 until device.interfaceCount) {
-                          if (device.getInterface(i).interfaceClass == UsbConstants.USB_CLASS_PRINTER) {
-                              connectedUsbDevice = device
-                              selectedPrinterName = device.productName ?: "HP Ink Tank 319 (USB OTG)"
-                              return device
-                          }
-                      }
-                  }
-                  return null
-              }
-              fun requestPermission(device: UsbDevice) {
-                  val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) PendingIntent.FLAG_MUTABLE else 0
-                  val pi = PendingIntent.getBroadcast(context, 0, Intent(ACTION_USB_PERMISSION), flags)
-                  usbManager.requestPermission(device, pi)
-              }
-              fun sendRawUsbPrintJob(bmp: Bitmap, onResult: (Boolean, String) -> Unit) {
-                  val dev = connectedUsbDevice ?: findUsbPrinter()
-                  if (dev == null) {
-                      onResult(false, "USB OTG Printer connect nahi hai! Phone me OTG ON karein.")
-                      return
-                  }
-                  if (!usbManager.hasPermission(dev)) {
-                      requestPermission(dev)
-                      onResult(false, "USB Permission allow karein aur dobara Print dabayein.")
-                      return
-                  }
-                  Thread {
-                      var conn: UsbDeviceConnection? = null
-                      var intf: UsbInterface? = null
-                      try {
-                          var epOut: UsbEndpoint? = null
-                          for (i in 0 until dev.interfaceCount) {
-                              val itf = dev.getInterface(i)
-                              for (j in 0 until itf.endpointCount) {
-                                  val ep = itf.getEndpoint(j)
-                                  if (ep.type == UsbConstants.USB_ENDPOINT_XFER_BULK && ep.direction == UsbConstants.USB_DIR_OUT) {
-                                      intf = itf; epOut = ep; break
-                                  }
-                              }
-                              if (epOut != null) break
-                          }
-                          if (intf == null || epOut == null) {
-                              onResult(false, "Printer Bulk Endpoint nahi mila!")
-                              return@Thread
-                          }
-                          conn = usbManager.openDevice(dev)
-                          conn.claimInterface(intf, true)
-                          val data = encodeToPcl(bmp)
-                          var offset = 0
-                          while (offset < data.size) {
-                              val len = minOf(16384, data.size - offset)
-                              val chunk = data.copyOfRange(offset, offset + len)
-                              val sent = conn.bulkTransfer(epOut, chunk, chunk.size, 8000)
-                              if (sent < 0) throw Exception("Transfer interrupted")
-                              offset += len
-                          }
-                          onResult(true, "Print Job Sent Successfully to HP 319!")
-                      } catch (e: Exception) {
-                          onResult(false, "USB Print Error: " + e.message)
-                      } finally {
-                          try { if (intf != null) conn?.releaseInterface(intf); conn?.close() } catch (_: Exception) {}
-                      }
-                  }.start()
-              }
-              private fun encodeToPcl(bmp: Bitmap): ByteArray {
-                  val out = ByteArrayOutputStream()
-                  val esc = 27.toByte()
-                  out.write(byteArrayOf(esc))
-                  out.write("%-12345X@PJL\r\n@PJL ENTER LANGUAGE = PCL\r\n".toByteArray())
-                  out.write(byteArrayOf(esc)); out.write("E".toByteArray())
-                  out.write(byteArrayOf(esc)); out.write("*t150R".toByteArray())
-                  out.write(byteArrayOf(esc)); out.write("*r1A".toByteArray())
-                  val w = bmp.width; val h = bmp.height
-                  val rowBytes = (w + 7) / 8
-                  val buf = ByteArray(rowBytes)
-                  for (y in 0 until h) {
-                      Arrays.fill(buf, 0.toByte())
-                      for (x in 0 until w) {
-                          val p = bmp.getPixel(x, y)
-                          val lum = (0.299 * ((p shr 16) and 0xFF) + 0.587 * ((p shr 8) and 0xFF) + 0.114 * (p and 0xFF)).toInt()
-                          if (lum < 165) buf[x / 8] = (buf[x / 8].toInt() or (1 shl (7 - (x % 8)))).toByte()
-                      }
-                      out.write(byteArrayOf(esc)); out.write("*b0M".toByteArray())
-                      out.write(byteArrayOf(esc)); out.write(("*b" + rowBytes.toString() + "W").toByteArray())
-                      out.write(buf)
-                  }
-                  out.write(byteArrayOf(esc)); out.write("*rB".toByteArray())
-                  out.write(byteArrayOf(12.toByte()))
-                  out.write(byteArrayOf(esc)); out.write("E".toByteArray())
-                  return out.toByteArray()
-              }
-          }
-          """)
+          w("app/src/main/java/com/example/printershareusb/UsbPrinterHelper.kt", [
+              "package com.example.printershareusb",
+              "import android.app.Activity",
+              "import android.app.PendingIntent",
+              "import android.content.Context",
+              "import android.content.Intent",
+              "import android.graphics.*",
+              "import android.graphics.pdf.PrintedPdfDocument",
+              "import android.hardware.usb.*",
+              "import android.os.Build",
+              "import android.os.Bundle",
+              "import android.os.CancellationSignal",
+              "import android.os.ParcelFileDescriptor",
+              "import android.print.*",
+              "import androidx.print.PrintHelper",
+              "import java.io.ByteArrayOutputStream",
+              "import java.io.FileOutputStream",
+              "import java.util.Arrays",
+              "",
+              "class UsbPrinterHelper(private val context: Context) {",
+              "    val usbManager: UsbManager = context.getSystemService(Context.USB_SERVICE) as UsbManager",
+              "    companion object {",
+              "        const val ACTION_USB_PERMISSION = \"com.example.printershareusb.USB_PERMISSION\"",
+              "        var selectedPrinterName: String = \"Not selected (Tap Select)\"",
+              "        var selectedMode: Int = 0 // 0=USB_OTG, 1=WIFI_SPOOLER, 2=PDF_EXPORT",
+              "        var connectedUsbDevice: UsbDevice? = null",
+              "    }",
+              "    fun findUsbPrinter(): UsbDevice? {",
+              "        for (device in usbManager.deviceList.values) {",
+              "            if (device.vendorId == 1008 || device.deviceClass == UsbConstants.USB_CLASS_PRINTER) {",
+              "                connectedUsbDevice = device",
+              "                selectedPrinterName = (device.productName ?: \"HP Ink Tank 319\") + \" (USB OTG)\"",
+              "                return device",
+              "            }",
+              "            for (i in 0 until device.interfaceCount) {",
+              "                if (device.getInterface(i).interfaceClass == UsbConstants.USB_CLASS_PRINTER) {",
+              "                    connectedUsbDevice = device",
+              "                    selectedPrinterName = (device.productName ?: \"HP Ink Tank 319\") + \" (USB OTG)\"",
+              "                    return device",
+              "                }",
+              "            }",
+              "        }",
+              "        return null",
+              "    }",
+              "    fun requestPermission(device: UsbDevice) {",
+              "        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) PendingIntent.FLAG_MUTABLE else 0",
+              "        val pi = PendingIntent.getBroadcast(context, 0, Intent(ACTION_USB_PERMISSION), flags)",
+              "        usbManager.requestPermission(device, pi)",
+              "    }",
+              "    fun printBitmapViaSystemSpooler(activity: Activity, bmp: Bitmap, jobName: String) {",
+              "        val helper = PrintHelper(activity)",
+              "        helper.scaleMode = PrintHelper.SCALE_MODE_FIT",
+              "        helper.printBitmap(jobName, bmp)",
+              "    }",
+              "    fun exportBitmapAsPdfViaSpooler(activity: Activity, bmp: Bitmap, jobName: String) {",
+              "        val pm = activity.getSystemService(Context.PRINT_SERVICE) as PrintManager",
+              "        val attr = PrintAttributes.Builder()",
+              "            .setMediaSize(PrintAttributes.MediaSize.ISO_A4)",
+              "            .setResolution(PrintAttributes.Resolution(\"pdf\", \"pdf\", 300, 300))",
+              "            .setMinMargins(PrintAttributes.Margins.NO_MARGINS).build()",
+              "        pm.print(jobName, object : PrintDocumentAdapter() {",
+              "            override fun onLayout(oldA: PrintAttributes?, newA: PrintAttributes?, cs: CancellationSignal?, cb: LayoutResultCallback?, ext: Bundle?) {",
+              "                if (cs?.isCanceled == true) { cb?.onLayoutCancelled(); return }",
+              "                val info = PrintDocumentInfo.Builder(jobName + \".pdf\")",
+              "                    .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)",
+              "                    .setPageCount(1).build()",
+              "                cb?.onLayoutFinished(info, true)",
+              "            }",
+              "            override fun onWrite(pages: Array<out PageRange>?, dest: ParcelFileDescriptor?, cs: CancellationSignal?, cb: WriteResultCallback?) {",
+              "                try {",
+              "                    val doc = PrintedPdfDocument(activity, attr)",
+              "                    val page = doc.startPage(1)",
+              "                    val c = page.canvas",
+              "                    val scale = minOf(c.width.toFloat() / bmp.width, c.height.toFloat() / bmp.height)",
+              "                    val dw = (bmp.width * scale).toInt()",
+              "                    val dh = (bmp.height * scale).toInt()",
+              "                    val left = (c.width - dw) / 2",
+              "                    val top = (c.height - dh) / 2",
+              "                    c.drawBitmap(bmp, null, Rect(left, top, left + dw, top + dh), Paint(Paint.FILTER_BITMAP_FLAG))",
+              "                    doc.finishPage(page)",
+              "                    doc.writeTo(FileOutputStream(dest?.fileDescriptor))",
+              "                    doc.close()",
+              "                    cb?.onWriteFinished(arrayOf(PageRange.ALL_PAGES))",
+              "                } catch (e: Exception) {",
+              "                    cb?.onWriteFailed(e.message)",
+              "                }",
+              "            }",
+              "        }, attr)",
+              "    }",
+              "    fun generateTestPageBitmap(): Bitmap {",
+              "        val bmp = Bitmap.createBitmap(1200, 1600, Bitmap.Config.ARGB_8888)",
+              "        val c = Canvas(bmp); c.drawColor(Color.WHITE)",
+              "        val p = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.parseColor(\"#0288D1\"); style = Paint.Style.STROKE; strokeWidth = 8f }",
+              "        c.drawRect(60f, 60f, 1140f, 1540f, p)",
+              "        p.style = Paint.Style.FILL; p.textSize = 48f; p.isFakeBoldText = true",
+              "        c.drawText(\"PrinterShare USB Edition\", 140f, 200f, p)",
+              "        p.color = Color.BLACK; p.textSize = 34f; p.isFakeBoldText = false",
+              "        c.drawText(\"Printer Model : HP Ink Tank 319\", 140f, 320f, p)",
+              "        c.drawText(\"Connection    : USB Type-C OTG / Spooler\", 140f, 390f, p)",
+              "        c.drawText(\"Status        : Ready & Calibrated\", 140f, 460f, p)",
+              "        return bmp",
+              "    }",
+              "    fun sendRawUsbPrintJob(bmp: Bitmap, onResult: (Boolean, String) -> Unit) {",
+              "        val dev = connectedUsbDevice ?: findUsbPrinter()",
+              "        if (dev == null) {",
+              "            onResult(false, \"USB OTG Printer connect nahi hai! Cable aur Phone OTG Setting check karein.\")",
+              "            return",
+              "        }",
+              "        if (!usbManager.hasPermission(dev)) {",
+              "            requestPermission(dev)",
+              "            onResult(false, \"USB Permission Allow karein aur dobara Print dabayein.\")",
+              "            return",
+              "        }",
+              "        Thread {",
+              "            var conn: UsbDeviceConnection? = null",
+              "            var intf: UsbInterface? = null",
+              "            try {",
+              "                var epOut: UsbEndpoint? = null",
+              "                for (i in 0 until dev.interfaceCount) {",
+              "                    val itf = dev.getInterface(i)",
+              "                    for (j in 0 until itf.endpointCount) {",
+              "                        val ep = itf.getEndpoint(j)",
+              "                        if (ep.type == UsbConstants.USB_ENDPOINT_XFER_BULK && ep.direction == UsbConstants.USB_DIR_OUT) {",
+              "                            intf = itf; epOut = ep; break",
+              "                        }",
+              "                    }",
+              "                    if (epOut != null) break",
+              "                }",
+              "                if (intf == null || epOut == null) {",
+              "                    onResult(false, \"Printer Bulk Endpoint nahi mila!\")",
+              "                    return@Thread",
+              "                }",
+              "                conn = usbManager.openDevice(dev)",
+              "                conn.claimInterface(intf, true)",
+              "                val data = encodeToPcl(bmp)",
+              "                var offset = 0",
+              "                while (offset < data.size) {",
+              "                    val len = minOf(16384, data.size - offset)",
+              "                    val chunk = data.copyOfRange(offset, offset + len)",
+              "                    val sent = conn.bulkTransfer(epOut, chunk, chunk.size, 8000)",
+              "                    if (sent < 0) throw Exception(\"USB Transfer interrupted\")",
+              "                    offset += len",
+              "                }",
+              "                onResult(true, \"Print Job Sent Successfully to HP Ink Tank 319!\")",
+              "            } catch (e: Exception) {",
+              "                onResult(false, \"USB Print Error: \" + e.message)",
+              "            } finally {",
+              "                try { if (intf != null) conn?.releaseInterface(intf); conn?.close() } catch (_: Exception) {}",
+              "            }",
+              "        }.start()",
+              "    }",
+              "    private fun encodeToPcl(bmp: Bitmap): ByteArray {",
+              "        val out = ByteArrayOutputStream()",
+              "        val esc = 27.toByte()",
+              "        out.write(byteArrayOf(esc))",
+              "        out.write(\"%-12345X@PJL\\r\\n@PJL ENTER LANGUAGE = PCL\\r\\n\".toByteArray())",
+              "        out.write(byteArrayOf(esc)); out.write(\"E\".toByteArray())",
+              "        out.write(byteArrayOf(esc)); out.write(\"*t150R\".toByteArray())",
+              "        out.write(byteArrayOf(esc)); out.write(\"*r1A\".toByteArray())",
+              "        val w = bmp.width; val h = bmp.height",
+              "        val rowBytes = (w + 7) / 8",
+              "        val buf = ByteArray(rowBytes)",
+              "        for (y in 0 until h) {",
+              "            Arrays.fill(buf, 0.toByte())",
+              "            for (x in 0 until w) {",
+              "                val p = bmp.getPixel(x, y)",
+              "                val lum = (0.299 * ((p shr 16) and 0xFF) + 0.587 * ((p shr 8) and 0xFF) + 0.114 * (p and 0xFF)).toInt()",
+              "                if (lum < 165) buf[x / 8] = (buf[x / 8].toInt() or (1 shl (7 - (x % 8)))).toByte()",
+              "            }",
+              "            out.write(byteArrayOf(esc)); out.write(\"*b0M\".toByteArray())",
+              "            out.write(byteArrayOf(esc)); out.write((\"*b\" + rowBytes.toString() + \"W\").toByteArray())",
+              "            out.write(buf)",
+              "        }",
+              "        out.write(byteArrayOf(esc)); out.write(\"*rB\".toByteArray())",
+              "        out.write(byteArrayOf(12.toByte()))",
+              "        out.write(byteArrayOf(esc)); out.write(\"E\".toByteArray())",
+              "        return out.toByteArray()",
+              "    }",
+              "}"
+          ])
 
-          w("app/src/main/java/com/example/printershareusb/WebPrintActivity.kt", """
-          package com.example.printershareusb
-          import android.content.Intent
-          import android.graphics.Bitmap
-          import android.graphics.Canvas
-          import android.graphics.Color
-          import android.os.Bundle
-          import android.view.Gravity
-          import android.view.inputmethod.EditorInfo
-          import android.webkit.*
-          import android.widget.*
-          import androidx.appcompat.app.AppCompatActivity
+          w("app/src/main/java/com/example/printershareusb/WebPrintActivity.kt", [
+              "package com.example.printershareusb",
+              "import android.content.Intent",
+              "import android.graphics.Bitmap",
+              "import android.graphics.Canvas",
+              "import android.graphics.Color",
+              "import android.os.Bundle",
+              "import android.view.Gravity",
+              "import android.view.inputmethod.EditorInfo",
+              "import android.webkit.*",
+              "import android.widget.*",
+              "import androidx.appcompat.app.AppCompatActivity",
+              "",
+              "class WebPrintActivity : AppCompatActivity() {",
+              "    companion object { var capturedWebBitmap: Bitmap? = null }",
+              "    override fun onCreate(savedInstanceState: Bundle?) {",
+              "        super.onCreate(savedInstanceState)",
+              "        val root = LinearLayout(this).apply {",
+              "            orientation = LinearLayout.VERTICAL",
+              "            setBackgroundColor(ThemePrefs.bgColor(this@WebPrintActivity))",
+              "        }",
+              "        val topBar = LinearLayout(this).apply {",
+              "            orientation = LinearLayout.HORIZONTAL",
+              "            setPadding(16, 14, 16, 14)",
+              "            setBackgroundColor(ThemePrefs.barColor(this@WebPrintActivity))",
+              "            gravity = Gravity.CENTER_VERTICAL",
+              "        }",
+              "        val etUrl = EditText(this).apply {",
+              "            layoutParams = LinearLayout.LayoutParams(0, 110, 1f)",
+              "            hint = \"Search Google or enter URL...\"",
+              "            setText(\"https://www.google.com\")",
+              "            setSingleLine(true)",
+              "            imeOptions = EditorInfo.IME_ACTION_GO",
+              "            setTextColor(ThemePrefs.textColor(this@WebPrintActivity))",
+              "            setHintTextColor(ThemePrefs.subTextColor(this@WebPrintActivity))",
+              "            setPadding(24, 10, 24, 10)",
+              "        }",
+              "        val btnGo = Button(this).apply {",
+              "            layoutParams = LinearLayout.LayoutParams(180, 110).apply { leftMargin = 12 }",
+              "            text = \"Go\"",
+              "            setBackgroundColor(Color.parseColor(\"#0288D1\"))",
+              "            setTextColor(Color.WHITE)",
+              "        }",
+              "        topBar.addView(etUrl); topBar.addView(btnGo)",
+              "        val progressBar = ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply {",
+              "            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 8)",
+              "            max = 100",
+              "        }",
+              "        val webView = WebView(this).apply {",
+              "            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f)",
+              "            settings.apply {",
+              "                javaScriptEnabled = true",
+              "                domStorageEnabled = true",
+              "                databaseEnabled = true",
+              "                loadsImagesAutomatically = true",
+              "                useWideViewPort = true",
+              "                loadWithOverviewMode = true",
+              "                builtInZoomControls = true",
+              "                displayZoomControls = false",
+              "                mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW",
+              "                userAgentString = \"Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36\"",
+              "            }",
+              "            webChromeClient = object : WebChromeClient() {",
+              "                override fun onProgressChanged(view: WebView?, newProgress: Int) { progressBar.progress = newProgress }",
+              "            }",
+              "            webViewClient = object : WebViewClient() {",
+              "                override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {",
+              "                    val u = request?.url?.toString() ?: return false",
+              "                    if (u.startsWith(\"http://\") || u.startsWith(\"https://\")) {",
+              "                        etUrl.setText(u); return false",
+              "                    }",
+              "                    return true",
+              "                }",
+              "            }",
+              "        }",
+              "        val btnCapture = Button(this).apply {",
+              "            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 135)",
+              "            text = \"Capture & Open Print Preview\"",
+              "            isAllCaps = false; textSize = 16f",
+              "            setBackgroundColor(Color.parseColor(\"#0288D1\"))",
+              "            setTextColor(Color.WHITE)",
+              "        }",
+              "        root.addView(topBar); root.addView(progressBar); root.addView(webView); root.addView(btnCapture)",
+              "        setContentView(root)",
+              "        val loadSmartUrl = {",
+              "            val raw = etUrl.text.toString().trim()",
+              "            if (raw.isNotEmpty()) {",
+              "                val finalUrl = when {",
+              "                    raw.startsWith(\"http://\") || raw.startsWith(\"https://\") -> raw",
+              "                    raw.contains(\".\") && !raw.contains(\" \") -> \"https://\" + raw",
+              "                    else -> \"https://www.google.com/search?q=\" + android.net.Uri.encode(raw)",
+              "                }",
+              "                etUrl.setText(finalUrl); webView.loadUrl(finalUrl)",
+              "            }",
+              "        }",
+              "        btnGo.setOnClickListener { loadSmartUrl() }",
+              "        etUrl.setOnEditorActionListener { _, actionId, _ ->",
+              "            if (actionId == EditorInfo.IME_ACTION_GO || actionId == EditorInfo.IME_ACTION_DONE) {",
+              "                loadSmartUrl(); true",
+              "            } else false",
+              "        }",
+              "        webView.loadUrl(\"https://www.google.com\")",
+              "        btnCapture.setOnClickListener {",
+              "            val w = webView.width.coerceAtLeast(800)",
+              "            val h = webView.height.coerceAtLeast(1000)",
+              "            val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)",
+              "            val c = Canvas(bmp); c.drawColor(Color.WHITE); webView.draw(c)",
+              "            capturedWebBitmap = bmp",
+              "            startActivity(Intent(this, PrintPreviewActivity::class.java).putExtra(\"FROM_WEB\", true))",
+              "        }",
+              "    }",
+              "}"
+          ])
 
-          class WebPrintActivity : AppCompatActivity() {
-              companion object { var capturedWebBitmap: Bitmap? = null }
-              override fun onCreate(savedInstanceState: Bundle?) {
-                  super.onCreate(savedInstanceState)
-                  val root = LinearLayout(this).apply {
-                      orientation = LinearLayout.VERTICAL
-                      setBackgroundColor(ThemePrefs.bgColor(this@WebPrintActivity))
-                  }
-                  val topBar = LinearLayout(this).apply {
-                      orientation = LinearLayout.HORIZONTAL
-                      setPadding(16, 14, 16, 14)
-                      setBackgroundColor(ThemePrefs.barColor(this@WebPrintActivity))
-                      gravity = Gravity.CENTER_VERTICAL
-                  }
-                  val etUrl = EditText(this).apply {
-                      layoutParams = LinearLayout.LayoutParams(0, 110, 1f)
-                      hint = "Search Google or type URL..."
-                      setText("https://www.google.com")
-                      setSingleLine(true)
-                      imeOptions = EditorInfo.IME_ACTION_GO
-                      setTextColor(ThemePrefs.textColor(this@WebPrintActivity))
-                      setHintTextColor(ThemePrefs.subTextColor(this@WebPrintActivity))
-                      setPadding(24, 10, 24, 10)
-                  }
-                  val btnGo = Button(this).apply {
-                      layoutParams = LinearLayout.LayoutParams(180, 110).apply { leftMargin = 12 }
-                      text = "Go"
-                      setBackgroundColor(Color.parseColor("#0288D1"))
-                      setTextColor(Color.WHITE)
-                  }
-                  topBar.addView(etUrl); topBar.addView(btnGo)
-                  val progressBar = ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply {
-                      layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 8)
-                      max = 100
-                  }
-                  val webView = WebView(this).apply {
-                      layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f)
-                      settings.apply {
-                          javaScriptEnabled = true
-                          domStorageEnabled = true
-                          databaseEnabled = true
-                          loadsImagesAutomatically = true
-                          useWideViewPort = true
-                          loadWithOverviewMode = true
-                          builtInZoomControls = true
-                          displayZoomControls = false
-                          mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-                          userAgentString = "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
-                      }
-                      webChromeClient = object : WebChromeClient() {
-                          override fun onProgressChanged(view: WebView?, newProgress: Int) { progressBar.progress = newProgress }
-                      }
-                      webViewClient = object : WebViewClient() {
-                          override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
-                              val u = request?.url?.toString() ?: return false
-                              if (u.startsWith("http://") || u.startsWith("https://")) {
-                                  etUrl.setText(u); return false
-                              }
-                              return true
-                          }
-                      }
-                  }
-                  val btnCapture = Button(this).apply {
-                      layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 135)
-                      text = "🌐 Capture & Send to Print Preview"
-                      isAllCaps = false; textSize = 16f
-                      setBackgroundColor(Color.parseColor("#0288D1"))
-                      setTextColor(Color.WHITE)
-                  }
-                  root.addView(topBar); root.addView(progressBar); root.addView(webView); root.addView(btnCapture)
-                  setContentView(root)
+          w("app/src/main/java/com/example/printershareusb/PrintPreviewActivity.kt", [
+              "package com.example.printershareusb",
+              "import android.app.AlertDialog",
+              "import android.content.Context",
+              "import android.graphics.*",
+              "import android.graphics.pdf.PdfRenderer",
+              "import android.net.Uri",
+              "import android.os.Bundle",
+              "import android.widget.*",
+              "import androidx.appcompat.app.AppCompatActivity",
+              "",
+              "class PrintPreviewActivity : AppCompatActivity() {",
+              "    private lateinit var ivPageCanvas: ImageView",
+              "    private lateinit var tvPageSummary: TextView",
+              "    private lateinit var tvSelectedPrinterPreview: TextView",
+              "    private lateinit var tvPageIndicator: TextView",
+              "    private lateinit var usbHelper: UsbPrinterHelper",
+              "    private val sourceBitmaps = mutableListOf<Bitmap>()",
+              "    private var renderedPageBitmap: Bitmap? = null",
+              "    private var isPdf = false",
+              "    private var pdfUri: Uri? = null",
+              "    private var currentPageIndex = 0",
+              "    private var totalPages = 1",
+              "    private var pictureSize = \"4x6 in (10x15 cm)\"",
+              "    private var pictureScaling = \"Crop\"",
+              "    private var pictureAlign = \"Center\"",
+              "    private var pageLayout = \"Single picture\"",
+              "    private var pageMargins = \"Normal\"",
+              "    private var pageOrientation = \"Auto\"",
+              "    private var copiesCount = 1",
+              "",
+              "    override fun onCreate(savedInstanceState: Bundle?) {",
+              "        super.onCreate(savedInstanceState)",
+              "        setContentView(R.layout.activity_print_preview)",
+              "        findViewById<RelativeLayout>(R.id.previewRoot).setBackgroundColor(ThemePrefs.bgColor(this))",
+              "        findViewById<RelativeLayout>(R.id.previewHeader).setBackgroundColor(ThemePrefs.barColor(this))",
+              "        findViewById<RelativeLayout>(R.id.bottomControls).setBackgroundColor(ThemePrefs.barColor(this))",
+              "        findViewById<TextView>(R.id.tvPreviewTitle).setTextColor(ThemePrefs.textColor(this))",
+              "        ivPageCanvas = findViewById(R.id.ivPageCanvas)",
+              "        tvPageSummary = findViewById(R.id.tvPageSummary)",
+              "        tvSelectedPrinterPreview = findViewById(R.id.tvSelectedPrinterPreview)",
+              "        tvPageIndicator = findViewById(R.id.tvPageIndicator)",
+              "        usbHelper = UsbPrinterHelper(this)",
+              "        tvPageSummary.setTextColor(ThemePrefs.subTextColor(this))",
+              "        tvPageIndicator.setTextColor(ThemePrefs.textColor(this))",
+              "        tvSelectedPrinterPreview.text = \"Printer: \" + UsbPrinterHelper.selectedPrinterName",
+              "        isPdf = intent.getBooleanExtra(\"IS_PDF\", false)",
+              "        val uriList = intent.getStringArrayListExtra(\"FILE_URIS\")",
+              "        val textContent = intent.getStringExtra(\"TEXT_CONTENT\")",
+              "        if (WebPrintActivity.capturedWebBitmap != null && intent.getBooleanExtra(\"FROM_WEB\", false)) {",
+              "            sourceBitmaps.add(WebPrintActivity.capturedWebBitmap!!)",
+              "            pictureSize = \"Fit to page\"; pictureScaling = \"Inside\"",
+              "        } else if (textContent != null) {",
+              "            sourceBitmaps.add(createBitmapFromText(textContent))",
+              "            pictureSize = \"Fit to page\"; pictureScaling = \"Inside\"",
+              "        } else if (!uriList.isNullOrEmpty()) {",
+              "            if (isPdf) {",
+              "                pdfUri = Uri.parse(uriList[0])",
+              "                pictureSize = \"Fit to page\"; pictureScaling = \"Inside\"",
+              "                loadPdfPage(0)",
+              "            } else {",
+              "                for (u in uriList) { loadBitmapFromUri(Uri.parse(u))?.let { sourceBitmaps.add(it) } }",
+              "            }",
+              "        } else {",
+              "            sourceBitmaps.add(usbHelper.generateTestPageBitmap())",
+              "            pictureSize = \"Fit to page\"; pictureScaling = \"Inside\"",
+              "        }",
+              "        findViewById<Button>(R.id.btnPrevPage).setOnClickListener {",
+              "            if (isPdf && currentPageIndex > 0) { currentPageIndex--; loadPdfPage(currentPageIndex); renderPageCanvas() }",
+              "        }",
+              "        findViewById<Button>(R.id.btnNextPage).setOnClickListener {",
+              "            if (isPdf && currentPageIndex < totalPages - 1) { currentPageIndex++; loadPdfPage(currentPageIndex); renderPageCanvas() }",
+              "        }",
+              "        findViewById<Button>(R.id.btnOptions).setOnClickListener { showPrintOptionsMenu() }",
+              "        findViewById<Button>(R.id.btnPrint).setOnClickListener { showFinalPrintDialog() }",
+              "        renderPageCanvas()",
+              "    }",
+              "    private fun showPrintOptionsMenu() {",
+              "        val menuItems = arrayOf(",
+              "            \"Picture Size : \" + pictureSize,",
+              "            \"Picture Scaling : \" + pictureScaling,",
+              "            \"Picture Align : \" + pictureAlign,",
+              "            \"Page Layout : \" + pageLayout,",
+              "            \"Page Margins : \" + pageMargins,",
+              "            \"Page Orientation : \" + pageOrientation,",
+              "            \"Copies : \" + copiesCount.toString()",
+              "        )",
+              "        AlertDialog.Builder(this).setTitle(\"Print Options\").setItems(menuItems) { _, which ->",
+              "            when (which) {",
+              "                0 -> showRadioDialog(\"Picture Size\", arrayOf(\"Original size\", \"Fit to page\", \"3.5x5 in (9x13 cm)\", \"4x6 in (10x15 cm)\", \"5x7 in (13x18 cm)\", \"8x10 in (20x25 cm)\", \"8x12 in (20x30 cm)\", \"11x14 in (28x36 cm)\"), pictureSize) { pictureSize = it; renderPageCanvas() }",
+              "                1 -> showRadioDialog(\"Picture Scaling\", arrayOf(\"Crop\", \"Inside\"), pictureScaling) { pictureScaling = it; renderPageCanvas() }",
+              "                2 -> showRadioDialog(\"Picture Align\", arrayOf(\"Center\", \"Top Left\", \"Top Right\", \"Bottom Left\", \"Bottom Right\", \"Middle Left\", \"Middle Right\", \"Top Middle\", \"Bottom Middle\"), pictureAlign) { pictureAlign = it; renderPageCanvas() }",
+              "                3 -> showRadioDialog(\"Page Layout\", arrayOf(\"Single picture\", \"Grid 2x1\", \"Grid 2x2\", \"Grid 3x2\", \"Grid 3x3\"), pageLayout) { pageLayout = it; renderPageCanvas() }",
+              "                4 -> showRadioDialog(\"Page Margins\", arrayOf(\"No (minimum allowable)\", \"Small\", \"Normal\", \"Large\"), pageMargins) { pageMargins = it; renderPageCanvas() }",
+              "                5 -> showRadioDialog(\"Page Orientation\", arrayOf(\"Auto\", \"Portrait\", \"Landscape\"), pageOrientation) { pageOrientation = it; renderPageCanvas() }",
+              "                6 -> showRadioDialog(\"Number of Copies\", arrayOf(\"1\", \"2\", \"3\", \"5\", \"10\"), copiesCount.toString()) { copiesCount = it.toIntOrNull() ?: 1; renderPageCanvas() }",
+              "            }",
+              "        }.show()",
+              "    }",
+              "    private fun showRadioDialog(title: String, options: Array<String>, currentVal: String, onConfirmed: (String) -> Unit) {",
+              "        var selectedIdx = options.indexOf(currentVal).coerceAtLeast(0)",
+              "        AlertDialog.Builder(this).setTitle(title).setSingleChoiceItems(options, selectedIdx) { _, which -> selectedIdx = which }",
+              "            .setPositiveButton(\"OK\") { _, _ -> onConfirmed(options[selectedIdx]) }",
+              "            .setNegativeButton(\"Cancel\", null).show()",
+              "    }",
+              "    private fun renderPageCanvas() {",
+              "        if (sourceBitmaps.isEmpty()) return",
+              "        val firstBmp = sourceBitmaps[0]",
+              "        val isLandscape = when (pageOrientation) { \"Landscape\" -> true; \"Portrait\" -> false; else -> firstBmp.width > firstBmp.height }",
+              "        val pageW = if (isLandscape) 1650 else 1275",
+              "        val pageH = if (isLandscape) 1275 else 1650",
+              "        val sheetBmp = Bitmap.createBitmap(pageW, pageH, Bitmap.Config.ARGB_8888)",
+              "        val canvas = Canvas(sheetBmp); canvas.drawColor(Color.WHITE)",
+              "        val marginPx = when (pageMargins) { \"No (minimum allowable)\" -> 0; \"Small\" -> 36; \"Normal\" -> 75; \"Large\" -> 135; else -> 75 }",
+              "        val availW = pageW - (marginPx * 2); val availH = pageH - (marginPx * 2)",
+              "        if (pageLayout.startsWith(\"Grid\")) {",
+              "            val (rows, cols) = when (pageLayout) { \"Grid 2x1\" -> Pair(2, 1); \"Grid 2x2\" -> Pair(2, 2); \"Grid 3x2\" -> Pair(3, 2); \"Grid 3x3\" -> Pair(3, 3); else -> Pair(1, 1) }",
+              "            val cellW = availW / cols; val cellH = availH / rows; val gap = 12; var idx = 0",
+              "            for (r in 0 until rows) {",
+              "                for (c in 0 until cols) {",
+              "                    val bmp = sourceBitmaps[idx % sourceBitmaps.size]",
+              "                    drawBitmapInBox(canvas, bmp, Rect(marginPx + c * cellW + gap, marginPx + r * cellH + gap, marginPx + (c + 1) * cellW - gap, marginPx + (r + 1) * cellH - gap))",
+              "                    idx++",
+              "                }",
+              "            }",
+              "        } else {",
+              "            var (boxW, boxH) = when (pictureSize) {",
+              "                \"3.5x5 in (9x13 cm)\" -> Pair(525, 750)",
+              "                \"4x6 in (10x15 cm)\" -> Pair(600, 900)",
+              "                \"5x7 in (13x18 cm)\" -> Pair(750, 1050)",
+              "                \"8x10 in (20x25 cm)\" -> Pair(1200, 1500)",
+              "                \"8x12 in (20x30 cm)\" -> Pair(1200, 1650)",
+              "                \"11x14 in (28x36 cm)\" -> Pair(1650, 2100)",
+              "                \"Original size\" -> Pair(firstBmp.width.coerceAtMost(availW), firstBmp.height.coerceAtMost(availH))",
+              "                else -> Pair(availW, availH)",
+              "            }",
+              "            if (isLandscape && boxH > boxW) { val tmp = boxW; boxW = boxH; boxH = tmp }",
+              "            boxW = boxW.coerceAtMost(availW); boxH = boxH.coerceAtMost(availH)",
+              "            val left = when { pictureAlign.contains(\"Left\") -> marginPx; pictureAlign.contains(\"Right\") -> pageW - marginPx - boxW; else -> marginPx + (availW - boxW) / 2 }",
+              "            val top = when { pictureAlign.contains(\"Top\") -> marginPx; pictureAlign.contains(\"Bottom\") -> pageH - marginPx - boxH; else -> marginPx + (availH - boxH) / 2 }",
+              "            drawBitmapInBox(canvas, firstBmp, Rect(left, top, left + boxW, top + boxH))",
+              "        }",
+              "        renderedPageBitmap = sheetBmp",
+              "        ivPageCanvas.setImageBitmap(sheetBmp)",
+              "        tvPageIndicator.text = (currentPageIndex + 1).toString() + \" / \" + totalPages.toString()",
+              "        tvPageSummary.text = \"A4/Letter • \" + pageMargins + \" • Copies: \" + copiesCount + \"\\n\" + pictureSize + \" (\" + pictureScaling + \", \" + pictureAlign + \")\"",
+              "    }",
+              "    private fun drawBitmapInBox(canvas: Canvas, bmp: Bitmap, targetRect: Rect) {",
+              "        val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)",
+              "        val boxW = targetRect.width(); val boxH = targetRect.height()",
+              "        if (pictureScaling == \"Crop\") {",
+              "            val scale = maxOf(boxW.toFloat() / bmp.width, boxH.toFloat() / bmp.height)",
+              "            val cropW = (boxW / scale).toInt(); val cropH = (boxH / scale).toInt()",
+              "            val cropX = (bmp.width - cropW) / 2; val cropY = (bmp.height - cropH) / 2",
+              "            canvas.drawBitmap(bmp, Rect(cropX, cropY, cropX + cropW, cropY + cropH), targetRect, paint)",
+              "        } else {",
+              "            val scale = minOf(boxW.toFloat() / bmp.width, boxH.toFloat() / bmp.height)",
+              "            val drawW = (bmp.width * scale).toInt(); val drawH = (bmp.height * scale).toInt()",
+              "            val drawLeft = targetRect.left + (boxW - drawW) / 2; val drawTop = targetRect.top + (boxH - drawH) / 2",
+              "            canvas.drawBitmap(bmp, null, Rect(drawLeft, drawTop, drawLeft + drawW, drawTop + drawH), paint)",
+              "        }",
+              "    }",
+              "    private fun showFinalPrintDialog() {",
+              "        val finalBmp = renderedPageBitmap ?: return",
+              "        val methods = arrayOf(",
+              "            \"Direct USB OTG Print (HP Ink Tank 319 Raw PCL)\",",
+              "            \"Color Print via WiFi / OTG System Spooler\",",
+              "            \"Save / Export Page as PDF Document\"",
+              "        )",
+              "        AlertDialog.Builder(this).setTitle(\"Choose Print Output\").setItems(methods) { _, which ->",
+              "            when (which) {",
+              "                0 -> usbHelper.sendRawUsbPrintJob(finalBmp) { _, message -> runOnUiThread { Toast.makeText(this, message, Toast.LENGTH_LONG).show() } }",
+              "                1 -> usbHelper.printBitmapViaSystemSpooler(this, finalBmp, \"PrinterShare_Page_\" + (currentPageIndex + 1))",
+              "                2 -> usbHelper.exportBitmapAsPdfViaSpooler(this, finalBmp, \"PrinterShare_Page_\" + (currentPageIndex + 1))",
+              "            }",
+              "        }.show()",
+              "    }",
+              "    private fun loadBitmapFromUri(uri: Uri): Bitmap? = try { contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) } } catch (_: Exception) { null }",
+              "    private fun loadPdfPage(pageIndex: Int) {",
+              "        val uri = pdfUri ?: return",
+              "        try {",
+              "            val fd = contentResolver.openFileDescriptor(uri, \"r\") ?: return",
+              "            val renderer = PdfRenderer(fd)",
+              "            totalPages = renderer.pageCount",
+              "            val page = renderer.openPage(pageIndex.coerceIn(0, totalPages - 1))",
+              "            val bmp = Bitmap.createBitmap(page.width * 2, page.height * 2, Bitmap.Config.ARGB_8888)",
+              "            Canvas(bmp).drawColor(Color.WHITE)",
+              "            page.render(bmp, null, null, PdfRenderer.Page.RENDER_MODE_FOR_PRINT)",
+              "            page.close(); renderer.close(); fd.close()",
+              "            sourceBitmaps.clear(); sourceBitmaps.add(bmp)",
+              "        } catch (e: Exception) { Toast.makeText(this, \"PDF Error: \" + e.message, Toast.LENGTH_SHORT).show() }",
+              "    }",
+              "    private fun createBitmapFromText(text: String): Bitmap {",
+              "        val bmp = Bitmap.createBitmap(1200, 1600, Bitmap.Config.ARGB_8888)",
+              "        val canvas = Canvas(bmp); canvas.drawColor(Color.WHITE)",
+              "        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.BLACK; textSize = 36f }",
+              "        var y = 100f",
+              "        for (line in text.split(\"\\n\")) { canvas.drawText(line, 60f, y, paint); y += 52f }",
+              "        return bmp",
+              "    }",
+              "}"
+          ])
 
-                  val loadSmartUrl = {
-                      val raw = etUrl.text.toString().trim()
-                      if (raw.isNotEmpty()) {
-                          val finalUrl = when {
-                              raw.startsWith("http://") || raw.startsWith("https://") -> raw
-                              raw.contains(".") && !raw.contains(" ") -> "https://" + raw
-                              else -> "https://www.google.com/search?q=" + android.net.Uri.encode(raw)
-                          }
-                          etUrl.setText(finalUrl); webView.loadUrl(finalUrl)
-                      }
-                  }
-                  btnGo.setOnClickListener { loadSmartUrl() }
-                  etUrl.setOnEditorActionListener { _, actionId, _ ->
-                      if (actionId == EditorInfo.IME_ACTION_GO || actionId == EditorInfo.IME_ACTION_DONE) {
-                          loadSmartUrl(); true
-                      } else false
-                  }
-                  webView.loadUrl("https://www.google.com")
-                  btnCapture.setOnClickListener {
-                      val w = webView.width.coerceAtLeast(800)
-                      val h = webView.height.coerceAtLeast(1000)
-                      val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
-                      val c = Canvas(bmp); c.drawColor(Color.WHITE); webView.draw(c)
-                      capturedWebBitmap = bmp
-                      startActivity(Intent(this, PrintPreviewActivity::class.java).putExtra("FROM_WEB", true))
-                  }
-              }
-          }
-          """)
+          w("app/src/main/java/com/example/printershareusb/MainActivity.kt", [
+              "package com.example.printershareusb",
+              "import android.app.Activity",
+              "import android.app.AlertDialog",
+              "import android.content.*",
+              "import android.hardware.usb.UsbDevice",
+              "import android.hardware.usb.UsbManager",
+              "import android.os.Build",
+              "import android.os.Bundle",
+              "import android.widget.*",
+              "import androidx.appcompat.app.AppCompatActivity",
+              "",
+              "class MainActivity : AppCompatActivity() {",
+              "    private lateinit var usbHelper: UsbPrinterHelper",
+              "    private lateinit var tvPrinterStatus: TextView",
+              "    private val PICK_IMAGE = 201",
+              "    private val PICK_PDF = 202",
+              "",
+              "    private val usbReceiver = object : BroadcastReceiver() {",
+              "        override fun onReceive(context: Context, intent: Intent) {",
+              "            if (UsbPrinterHelper.ACTION_USB_PERMISSION == intent.action) {",
+              "                val device: UsbDevice? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {",
+              "                    intent.getParcelableExtra(UsbManager.EXTRA_DEVICE, UsbDevice::class.java)",
+              "                } else {",
+              "                    @Suppress(\"DEPRECATION\") intent.getParcelableExtra(UsbManager.EXTRA_DEVICE)",
+              "                }",
+              "                if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false) && device != null) {",
+              "                    UsbPrinterHelper.connectedUsbDevice = device",
+              "                    UsbPrinterHelper.selectedPrinterName = (device.productName ?: \"HP Ink Tank 319\") + \" (USB OTG)\"",
+              "                    tvPrinterStatus.text = UsbPrinterHelper.selectedPrinterName",
+              "                    Toast.makeText(context, \"Connected: \" + UsbPrinterHelper.selectedPrinterName, Toast.LENGTH_SHORT).show()",
+              "                }",
+              "            }",
+              "        }",
+              "    }",
+              "",
+              "    override fun onCreate(savedInstanceState: Bundle?) {",
+              "        super.onCreate(savedInstanceState)",
+              "        setContentView(R.layout.activity_main)",
+              "        usbHelper = UsbPrinterHelper(this)",
+              "        tvPrinterStatus = findViewById(R.id.tvPrinterStatus)",
+              "        applyDynamicTheme()",
+              "",
+              "        val filter = IntentFilter(UsbPrinterHelper.ACTION_USB_PERMISSION)",
+              "        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {",
+              "            registerReceiver(usbReceiver, filter, Context.RECEIVER_NOT_EXPORTED)",
+              "        } else {",
+              "            registerReceiver(usbReceiver, filter)",
+              "        }",
+              "        usbHelper.findUsbPrinter()?.let { tvPrinterStatus.text = UsbPrinterHelper.selectedPrinterName }",
+              "",
+              "        findViewById<Button>(R.id.btnThemeToggle).setOnClickListener {",
+              "            ThemePrefs.toggle(this)",
+              "            applyDynamicTheme()",
+              "        }",
+              "        findViewById<Button>(R.id.btnSelectPrinter).setOnClickListener { showSelectPrinterDialog() }",
+              "        findViewById<LinearLayout>(R.id.cardPictures).setOnClickListener {",
+              "            val intent = Intent(Intent.ACTION_GET_CONTENT).apply { type = \"image/*\"; putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true) }",
+              "            startActivityForResult(Intent.createChooser(intent, \"Select Pictures\"), PICK_IMAGE)",
+              "        }",
+              "        findViewById<LinearLayout>(R.id.cardDocuments).setOnClickListener {",
+              "            val intent = Intent(Intent.ACTION_GET_CONTENT).apply { type = \"application/pdf\" }",
+              "            startActivityForResult(Intent.createChooser(intent, \"Select PDF Document\"), PICK_PDF)",
+              "        }",
+              "        findViewById<LinearLayout>(R.id.cardWebPages).setOnClickListener {",
+              "            startActivity(Intent(this, WebPrintActivity::class.java))",
+              "        }",
+              "        findViewById<LinearLayout>(R.id.cardQuickText).setOnClickListener {",
+              "            val input = EditText(this).apply { hint = \"Type or paste any text / note here...\"; setPadding(40, 30, 40, 30) }",
+              "            AlertDialog.Builder(this).setTitle(\"Quick Text / Note Print\").setView(input)",
+              "                .setPositiveButton(\"Open Preview\") { _, _ ->",
+              "                    val txt = input.text.toString().ifBlank { \"Sample Print Page - HP Ink Tank 319\" }",
+              "                    startActivity(Intent(this, PrintPreviewActivity::class.java).putExtra(\"TEXT_CONTENT\", txt))",
+              "                }.setNegativeButton(\"Cancel\", null).show()",
+              "        }",
+              "    }",
+              "",
+              "    private fun applyDynamicTheme() {",
+              "        val isDark = ThemePrefs.isDark(this)",
+              "        findViewById<RelativeLayout>(R.id.mainRoot).setBackgroundColor(ThemePrefs.bgColor(this))",
+              "        findViewById<RelativeLayout>(R.id.headerBar).setBackgroundColor(ThemePrefs.barColor(this))",
+              "        findViewById<RelativeLayout>(R.id.bottomBar).setBackgroundColor(ThemePrefs.barColor(this))",
+              "        findViewById<TextView>(R.id.tvAppTitle).setTextColor(ThemePrefs.textColor(this))",
+              "        findViewById<TextView>(R.id.tvPrinterTitle).setTextColor(ThemePrefs.textColor(this))",
+              "        findViewById<TextView>(R.id.tvPrinterStatus).setTextColor(ThemePrefs.subTextColor(this))",
+              "        findViewById<Button>(R.id.btnThemeToggle).text = if (isDark) \"Light Mode\" else \"Dark Mode\"",
+              "        val cards = intArrayOf(R.id.cardPictures, R.id.cardDocuments, R.id.cardWebPages, R.id.cardQuickText)",
+              "        for (id in cards) { findViewById<LinearLayout>(id).setBackgroundColor(ThemePrefs.cardColor(this)) }",
+              "        val titles = intArrayOf(R.id.tvPicTitle, R.id.tvDocTitle, R.id.tvWebTitle, R.id.tvNoteTitle)",
+              "        for (id in titles) { findViewById<TextView>(id).setTextColor(ThemePrefs.textColor(this)) }",
+              "        val subs = intArrayOf(R.id.tvPicSub, R.id.tvDocSub, R.id.tvWebSub, R.id.tvNoteSub)",
+              "        for (id in subs) { findViewById<TextView>(id).setTextColor(ThemePrefs.subTextColor(this)) }",
+              "    }",
+              "",
+              "    private fun showSelectPrinterDialog() {",
+              "        val items = arrayOf(",
+              "            \"Direct USB Connected (OTG)\",",
+              "            \"Nearby WiFi Printer (Scan & Test)\",",
+              "            \"Print to PDF / System Spooler\"",
+              "        )",
+              "        AlertDialog.Builder(this).setTitle(\"Select Printer Connection\").setItems(items) { _, which ->",
+              "            when (which) {",
+              "                0 -> {",
+              "                    UsbPrinterHelper.selectedMode = 0",
+              "                    val dev = usbHelper.findUsbPrinter()",
+              "                    if (dev != null) {",
+              "                        usbHelper.requestPermission(dev)",
+              "                        tvPrinterStatus.text = UsbPrinterHelper.selectedPrinterName",
+              "                        AlertDialog.Builder(this).setTitle(\"USB Printer Detected!\")",
+              "                            .setMessage(\"Connected to: \" + UsbPrinterHelper.selectedPrinterName + \"\\n\\nDo you want to print a Test Page now?\")",
+              "                            .setPositiveButton(\"Print Test Page\") { _, _ ->",
+              "                                startActivity(Intent(this, PrintPreviewActivity::class.java))",
+              "                            }.setNegativeButton(\"OK\", null).show()",
+              "                    } else {",
+              "                        UsbPrinterHelper.selectedPrinterName = \"Direct USB OTG (Ready - Plug Cable)\"",
+              "                        tvPrinterStatus.text = UsbPrinterHelper.selectedPrinterName",
+              "                        AlertDialog.Builder(this).setTitle(\"Direct USB OTG Mode Active\")",
+              "                            .setMessage(\"1. Connect HP Ink Tank 319 via USB-to-Type-C OTG cable.\\n2. Turn ON 'OTG Connection' in your phone Settings.\\n\\nYou can also open the Test Page in Preview right now.\")",
+              "                            .setPositiveButton(\"Open Test Page\") { _, _ ->",
+              "                                startActivity(Intent(this, PrintPreviewActivity::class.java))",
+              "                            }.setNegativeButton(\"Close\", null).show()",
+              "                    }",
+              "                }",
+              "                1 -> {",
+              "                    UsbPrinterHelper.selectedMode = 1",
+              "                    UsbPrinterHelper.selectedPrinterName = \"Nearby WiFi Printer\"",
+              "                    tvPrinterStatus.text = UsbPrinterHelper.selectedPrinterName",
+              "                    usbHelper.printBitmapViaSystemSpooler(this, usbHelper.generateTestPageBitmap(), \"WiFi_Printer_Test_Page\")",
+              "                }",
+              "                2 -> {",
+              "                    UsbPrinterHelper.selectedMode = 2",
+              "                    UsbPrinterHelper.selectedPrinterName = \"Print to PDF / System Spooler\"",
+              "                    tvPrinterStatus.text = UsbPrinterHelper.selectedPrinterName",
+              "                    usbHelper.exportBitmapAsPdfViaSpooler(this, usbHelper.generateTestPageBitmap(), \"PrinterShare_Test_Page\")",
+              "                }",
+              "            }",
+              "        }.show()",
+              "    }",
+              "",
+              "    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {",
+              "        super.onActivityResult(requestCode, resultCode, data)",
+              "        if (resultCode == Activity.RESULT_OK && data != null) {",
+              "            val uris = ArrayList<String>()",
+              "            if (data.clipData != null) {",
+              "                for (i in 0 until data.clipData!!.itemCount) uris.add(data.clipData!!.getItemAt(i).uri.toString())",
+              "            } else if (data.data != null) {",
+              "                uris.add(data.data!!.toString())",
+              "            }",
+              "            if (uris.isNotEmpty()) {",
+              "                val intent = Intent(this, PrintPreviewActivity::class.java).apply {",
+              "                    putStringArrayListExtra(\"FILE_URIS\", uris)",
+              "                    putExtra(\"IS_PDF\", requestCode == PICK_PDF)",
+              "                }",
+              "                startActivity(intent)",
+              "            }",
+              "        }",
+              "    }",
+              "",
+              "    override fun onDestroy() {",
+              "        super.onDestroy()",
+              "        try { unregisterReceiver(usbReceiver) } catch (_: Exception) {}",
+              "    }",
+              "}"
+          ])
 
-          w("app/src/main/java/com/example/printershareusb/PrintPreviewActivity.kt", """
-          package com.example.printershareusb
-          import android.app.AlertDialog
-          import android.graphics.*
-          import android.graphics.pdf.PdfRenderer
-          import android.net.Uri
-          import android.os.Bundle
-          import android.widget.*
-          import androidx.appcompat.app.AppCompatActivity
-          import androidx.print.PrintHelper
+          w("app/src/main/res/layout/activity_main.xml", [
+              "<?xml version='1.0' encoding='utf-8'?>",
+              "<RelativeLayout xmlns:android='http://schemas.android.com/apk/res/android' android:id='@+id/mainRoot' android:layout_width='match_parent' android:layout_height='match_parent' android:background='#0D1117'>",
+              "    <RelativeLayout android:id='@+id/headerBar' android:layout_width='match_parent' android:layout_height='62dp' android:background='#161B22' android:paddingStart='14dp' android:paddingEnd='14dp'>",
+              "        <ImageView android:id='@+id/ivHeaderLogo' android:layout_width='36dp' android:layout_height='36dp' android:layout_centerVertical='true' android:src='@drawable/ic_launcher_printer' />",
+              "        <TextView android:id='@+id/tvAppTitle' android:layout_width='wrap_content' android:layout_height='wrap_content' android:layout_toEndOf='@id/ivHeaderLogo' android:layout_marginStart='10dp' android:layout_centerVertical='true' android:text='PrinterShare USB Edition' android:textColor='#FFFFFF' android:textSize='17sp' android:textStyle='bold' />",
+              "        <Button android:id='@+id/btnThemeToggle' android:layout_width='96dp' android:layout_height='36dp' android:layout_alignParentEnd='true' android:layout_centerVertical='true' android:background='#0288D1' android:text='Light Mode' android:textAllCaps='false' android:textColor='#FFFFFF' android:textSize='12sp' />",
+              "    </RelativeLayout>",
+              "    <View android:id='@+id/headerDivider' android:layout_width='match_parent' android:layout_height='2dp' android:layout_below='@id/headerBar' android:background='#0288D1' />",
+              "    <ScrollView android:layout_width='match_parent' android:layout_height='match_parent' android:layout_above='@+id/bottomBar' android:layout_below='@id/headerDivider'>",
+              "        <LinearLayout android:layout_width='match_parent' android:layout_height='wrap_content' android:orientation='vertical' android:padding='14dp'>",
+              "            <LinearLayout android:layout_width='match_parent' android:layout_height='wrap_content' android:orientation='horizontal'>",
+              "                <LinearLayout android:id='@+id/cardPictures' android:layout_width='0dp' android:layout_height='165dp' android:layout_weight='1' android:layout_margin='8dp' android:background='#161B22' android:gravity='center' android:orientation='vertical' android:padding='12dp' android:clickable='true' android:focusable='true'>",
+              "                    <ImageView android:layout_width='56dp' android:layout_height='56dp' android:src='@drawable/ic_pic' />",
+              "                    <TextView android:id='@+id/tvPicTitle' android:layout_width='wrap_content' android:layout_height='wrap_content' android:layout_marginTop='10dp' android:text='Pictures' android:textColor='#FFFFFF' android:textSize='16sp' android:textStyle='bold' />",
+              "                    <TextView android:id='@+id/tvPicSub' android:layout_width='wrap_content' android:layout_height='wrap_content' android:layout_marginTop='2dp' android:text='JPG, PNG &amp; Grid' android:textColor='#8B949E' android:textSize='12sp' />",
+              "                </LinearLayout>",
+              "                <LinearLayout android:id='@+id/cardDocuments' android:layout_width='0dp' android:layout_height='165dp' android:layout_weight='1' android:layout_margin='8dp' android:background='#161B22' android:gravity='center' android:orientation='vertical' android:padding='12dp' android:clickable='true' android:focusable='true'>",
+              "                    <ImageView android:layout_width='56dp' android:layout_height='56dp' android:src='@drawable/ic_doc' />",
+              "                    <TextView android:id='@+id/tvDocTitle' android:layout_width='wrap_content' android:layout_height='wrap_content' android:layout_marginTop='10dp' android:text='Documents' android:textColor='#FFFFFF' android:textSize='16sp' android:textStyle='bold' />",
+              "                    <TextView android:id='@+id/tvDocSub' android:layout_width='wrap_content' android:layout_height='wrap_content' android:layout_marginTop='2dp' android:text='PDF Multi-Page' android:textColor='#8B949E' android:textSize='12sp' />",
+              "                </LinearLayout>",
+              "            </LinearLayout>",
+              "            <LinearLayout android:layout_width='match_parent' android:layout_height='wrap_content' android:orientation='horizontal'>",
+              "                <LinearLayout android:id='@+id/cardWebPages' android:layout_width='0dp' android:layout_height='165dp' android:layout_weight='1' android:layout_margin='8dp' android:background='#161B22' android:gravity='center' android:orientation='vertical' android:padding='12dp' android:clickable='true' android:focusable='true'>",
+              "                    <ImageView android:layout_width='56dp' android:layout_height='56dp' android:src='@drawable/ic_web' />",
+              "                    <TextView android:id='@+id/tvWebTitle' android:layout_width='wrap_content' android:layout_height='wrap_content' android:layout_marginTop='10dp' android:text='Web Pages' android:textColor='#FFFFFF' android:textSize='16sp' android:textStyle='bold' />",
+              "                    <TextView android:id='@+id/tvWebSub' android:layout_width='wrap_content' android:layout_height='wrap_content' android:layout_marginTop='2dp' android:text='Live Browser Print' android:textColor='#8B949E' android:textSize='12sp' />",
+              "                </LinearLayout>",
+              "                <LinearLayout android:id='@+id/cardQuickText' android:layout_width='0dp' android:layout_height='165dp' android:layout_weight='1' android:layout_margin='8dp' android:background='#161B22' android:gravity='center' android:orientation='vertical' android:padding='12dp' android:clickable='true' android:focusable='true'>",
+              "                    <ImageView android:layout_width='56dp' android:layout_height='56dp' android:src='@drawable/ic_note' />",
+              "                    <TextView android:id='@+id/tvNoteTitle' android:layout_width='wrap_content' android:layout_height='wrap_content' android:layout_marginTop='10dp' android:text='Quick Note' android:textColor='#FFFFFF' android:textSize='16sp' android:textStyle='bold' />",
+              "                    <TextView android:id='@+id/tvNoteSub' android:layout_width='wrap_content' android:layout_height='wrap_content' android:layout_marginTop='2dp' android:text='Type &amp; Print Text' android:textColor='#8B949E' android:textSize='12sp' />",
+              "                </LinearLayout>",
+              "            </LinearLayout>",
+              "        </LinearLayout>",
+              "    </ScrollView>",
+              "    <RelativeLayout android:id='@+id/bottomBar' android:layout_width='match_parent' android:layout_height='78dp' android:layout_alignParentBottom='true' android:background='#161B22' android:padding='14dp'>",
+              "        <ImageView android:id='@+id/ivBottomPrinter' android:layout_width='40dp' android:layout_height='40dp' android:layout_centerVertical='true' android:src='@drawable/ic_launcher_printer' />",
+              "        <TextView android:id='@+id/tvPrinterTitle' android:layout_width='wrap_content' android:layout_height='wrap_content' android:layout_toEndOf='@id/ivBottomPrinter' android:layout_marginStart='12dp' android:text='Printer Connection' android:textColor='#FFFFFF' android:textSize='15sp' android:textStyle='bold' />",
+              "        <TextView android:id='@+id/tvPrinterStatus' android:layout_width='wrap_content' android:layout_height='wrap_content' android:layout_below='@id/tvPrinterTitle' android:layout_toEndOf='@id/ivBottomPrinter' android:layout_marginStart='12dp' android:layout_marginTop='2dp' android:text='Not selected (Tap Select)' android:textColor='#8B949E' android:textSize='12sp' />",
+              "        <Button android:id='@+id/btnSelectPrinter' android:layout_width='110dp' android:layout_height='44dp' android:layout_alignParentEnd='true' android:layout_centerVertical='true' android:background='#0288D1' android:text='Select' android:textAllCaps='false' android:textColor='#FFFFFF' android:textStyle='bold' />",
+              "    </RelativeLayout>",
+              "</RelativeLayout>"
+          ])
 
-          class PrintPreviewActivity : AppCompatActivity() {
-              private lateinit var ivPageCanvas: ImageView
-              private lateinit var tvPageSummary: TextView
-              private lateinit var tvSelectedPrinterPreview: TextView
-              private lateinit var tvPageIndicator: TextView
-              private lateinit var usbHelper: UsbPrinterHelper
-              private val sourceBitmaps = mutableListOf<Bitmap>()
-              private var renderedPageBitmap: Bitmap? = null
-              private var isPdf = false
-              private var pdfUri: Uri? = null
-              private var currentPageIndex = 0
-              private var totalPages = 1
-              private var pictureSize = "4x6 in (10x15 cm)"
-              private var pictureScaling = "Crop"
-              private var pictureAlign = "Center"
-              private var pageLayout = "Single picture"
-              private var pageMargins = "Normal"
-              private var pageOrientation = "Auto"
-
-              override fun onCreate(savedInstanceState: Bundle?) {
-                  super.onCreate(savedInstanceState)
-                  setContentView(R.layout.activity_print_preview)
-                  findViewById<RelativeLayout>(R.id.previewRoot).setBackgroundColor(ThemePrefs.bgColor(this))
-                  findViewById<RelativeLayout>(R.id.previewHeader).setBackgroundColor(ThemePrefs.barColor(this))
-                  findViewById<RelativeLayout>(R.id.bottomControls).setBackgroundColor(ThemePrefs.barColor(this))
-                  findViewById<TextView>(R.id.tvPreviewTitle).setTextColor(ThemePrefs.textColor(this))
-
-                  ivPageCanvas = findViewById(R.id.ivPageCanvas)
-                  tvPageSummary = findViewById(R.id.tvPageSummary)
-                  tvSelectedPrinterPreview = findViewById(R.id.tvSelectedPrinterPreview)
-                  tvPageIndicator = findViewById(R.id.tvPageIndicator)
-                  usbHelper = UsbPrinterHelper(this)
-
-                  tvPageSummary.setTextColor(ThemePrefs.subTextColor(this))
-                  tvPageIndicator.setTextColor(ThemePrefs.textColor(this))
-                  tvSelectedPrinterPreview.text = "🖨️ " + UsbPrinterHelper.selectedPrinterName
-
-                  isPdf = intent.getBooleanExtra("IS_PDF", false)
-                  val uriList = intent.getStringArrayListExtra("FILE_URIS")
-                  val textContent = intent.getStringExtra("TEXT_CONTENT")
-
-                  if (WebPrintActivity.capturedWebBitmap != null && intent.getBooleanExtra("FROM_WEB", false)) {
-                      sourceBitmaps.add(WebPrintActivity.capturedWebBitmap!!)
-                      pictureSize = "Fit to page"; pictureScaling = "Inside"
-                  } else if (textContent != null) {
-                      sourceBitmaps.add(createBitmapFromText(textContent))
-                      pictureSize = "Fit to page"; pictureScaling = "Inside"
-                  } else if (!uriList.isNullOrEmpty()) {
-                      if (isPdf) {
-                          pdfUri = Uri.parse(uriList[0])
-                          pictureSize = "Fit to page"; pictureScaling = "Inside"
-                          loadPdfPage(0)
-                      } else {
-                          for (u in uriList) { loadBitmapFromUri(Uri.parse(u))?.let { sourceBitmaps.add(it) } }
-                      }
-                  }
-                  findViewById<Button>(R.id.btnPrevPage).setOnClickListener {
-                      if (isPdf && currentPageIndex > 0) { currentPageIndex--; loadPdfPage(currentPageIndex); renderPageCanvas() }
-                  }
-                  findViewById<Button>(R.id.btnNextPage).setOnClickListener {
-                      if (isPdf && currentPageIndex < totalPages - 1) { currentPageIndex++; loadPdfPage(currentPageIndex); renderPageCanvas() }
-                  }
-                  findViewById<Button>(R.id.btnOptions).setOnClickListener { showPrintOptionsMenu() }
-                  findViewById<Button>(R.id.btnPrint).setOnClickListener { showFinalPrintDialog() }
-                  renderPageCanvas()
-              }
-
-              private fun showPrintOptionsMenu() {
-                  val menuItems = arrayOf(
-                      "Picture Size : " + pictureSize,
-                      "Picture Scaling : " + pictureScaling,
-                      "Picture Align : " + pictureAlign,
-                      "Page Layout : " + pageLayout,
-                      "Page Margins : " + pageMargins,
-                      "Page Orientation : " + pageOrientation,
-                      "Select Printer"
-                  )
-                  AlertDialog.Builder(this)
-                      .setTitle("Print Options")
-                      .setItems(menuItems) { _, which ->
-                          when (which) {
-                              0 -> showRadioDialog("Picture Size", arrayOf("Original size", "Fit to page", "3.5x5 in (9x13 cm)", "4x6 in (10x15 cm)", "5x7 in (13x18 cm)", "8x10 in (20x25 cm)", "8x12 in (20x30 cm)", "11x14 in (28x36 cm)"), pictureSize) { pictureSize = it; renderPageCanvas() }
-                              1 -> showRadioDialog("Picture Scaling", arrayOf("Crop", "Inside"), pictureScaling) { pictureScaling = it; renderPageCanvas() }
-                              2 -> showRadioDialog("Picture Align", arrayOf("Center", "Top Left", "Top Right", "Bottom Left", "Bottom Right", "Middle Left", "Middle Right", "Top Middle", "Bottom Middle"), pictureAlign) { pictureAlign = it; renderPageCanvas() }
-                              3 -> showRadioDialog("Page Layout", arrayOf("Single picture", "Grid 2x1", "Grid 2x2", "Grid 3x2", "Grid 3x3"), pageLayout) { pageLayout = it; renderPageCanvas() }
-                              4 -> showRadioDialog("Page Margins", arrayOf("No (minimum allowable)", "Small", "Normal", "Large"), pageMargins) { pageMargins = it; renderPageCanvas() }
-                              5 -> showRadioDialog("Page Orientation", arrayOf("Auto", "Portrait", "Landscape"), pageOrientation) { pageOrientation = it; renderPageCanvas() }
-                              6 -> {
-                                  val dev = usbHelper.findUsbPrinter()
-                                  if (dev != null) {
-                                      usbHelper.requestPermission(dev)
-                                      tvSelectedPrinterPreview.text = "🖨️ " + UsbPrinterHelper.selectedPrinterName
-                                  } else {
-                                      Toast.makeText(this, "USB OTG Printer nahi mila!", Toast.LENGTH_SHORT).show()
-                                  }
-                              }
-                          }
-                      }.show()
-              }
-
-              private fun showRadioDialog(title: String, options: Array<String>, currentVal: String, onConfirmed: (String) -> Unit) {
-                  var selectedIdx = options.indexOf(currentVal).coerceAtLeast(0)
-                  AlertDialog.Builder(this)
-                      .setTitle(title)
-                      .setSingleChoiceItems(options, selectedIdx) { _, which -> selectedIdx = which }
-                      .setPositiveButton("OK") { _, _ -> onConfirmed(options[selectedIdx]) }
-                      .setNegativeButton("Cancel", null).show()
-              }
-
-              private fun renderPageCanvas() {
-                  if (sourceBitmaps.isEmpty()) return
-                  val firstBmp = sourceBitmaps[0]
-                  val isLandscape = when (pageOrientation) {
-                      "Landscape" -> true
-                      "Portrait" -> false
-                      else -> firstBmp.width > firstBmp.height
-                  }
-                  val pageW = if (isLandscape) 1650 else 1275
-                  val pageH = if (isLandscape) 1275 else 1650
-                  val sheetBmp = Bitmap.createBitmap(pageW, pageH, Bitmap.Config.ARGB_8888)
-                  val canvas = Canvas(sheetBmp)
-                  canvas.drawColor(Color.WHITE)
-
-                  val marginPx = when (pageMargins) {
-                      "No (minimum allowable)" -> 0
-                      "Small" -> 36
-                      "Normal" -> 75
-                      "Large" -> 135
-                      else -> 75
-                  }
-                  val availW = pageW - (marginPx * 2)
-                  val availH = pageH - (marginPx * 2)
-
-                  if (pageLayout.startsWith("Grid")) {
-                      val (rows, cols) = when (pageLayout) {
-                          "Grid 2x1" -> Pair(2, 1)
-                          "Grid 2x2" -> Pair(2, 2)
-                          "Grid 3x2" -> Pair(3, 2)
-                          "Grid 3x3" -> Pair(3, 3)
-                          else -> Pair(1, 1)
-                      }
-                      val cellW = availW / cols; val cellH = availH / rows; val gap = 12; var idx = 0
-                      for (r in 0 until rows) {
-                          for (c in 0 until cols) {
-                              val bmp = sourceBitmaps[idx % sourceBitmaps.size]
-                              drawBitmapInBox(canvas, bmp, Rect(marginPx + c * cellW + gap, marginPx + r * cellH + gap, marginPx + (c + 1) * cellW - gap, marginPx + (r + 1) * cellH - gap))
-                              idx++
-                          }
-                      }
-                  } else {
-                      var (boxW, boxH) = when (pictureSize) {
-                          "3.5x5 in (9x13 cm)" -> Pair(525, 750)
-                          "4x6 in (10x15 cm)" -> Pair(600, 900)
-                          "5x7 in (13x18 cm)" -> Pair(750, 1050)
-                          "8x10 in (20x25 cm)" -> Pair(1200, 1500)
-                          "8x12 in (20x30 cm)" -> Pair(1200, 1650)
-                          "11x14 in (28x36 cm)" -> Pair(1650, 2100)
-                          "Original size" -> Pair(firstBmp.width.coerceAtMost(availW), firstBmp.height.coerceAtMost(availH))
-                          else -> Pair(availW, availH)
-                      }
-                      if (isLandscape && boxH > boxW) { val tmp = boxW; boxW = boxH; boxH = tmp }
-                      boxW = boxW.coerceAtMost(availW); boxH = boxH.coerceAtMost(availH)
-                      val left = when {
-                          pictureAlign.contains("Left") -> marginPx
-                          pictureAlign.contains("Right") -> pageW - marginPx - boxW
-                          else -> marginPx + (availW - boxW) / 2
-                      }
-                      val top = when {
-                          pictureAlign.contains("Top") -> marginPx
-                          pictureAlign.contains("Bottom") -> pageH - marginPx - boxH
-                          else -> marginPx + (availH - boxH) / 2
-                      }
-                      drawBitmapInBox(canvas, firstBmp, Rect(left, top, left + boxW, top + boxH))
-                  }
-                  renderedPageBitmap = sheetBmp
-                  ivPageCanvas.setImageBitmap(sheetBmp)
-                  tvPageIndicator.text = (currentPageIndex + 1).toString() + " / " + totalPages.toString()
-                  tvPageSummary.text = "A4/Letter • " + pageMargins + " • " + pageOrientation + "\n" + pictureSize + " (" + pictureScaling + ", " + pictureAlign + ")"
-              }
-
-              private fun drawBitmapInBox(canvas: Canvas, bmp: Bitmap, targetRect: Rect) {
-                  val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
-                  val boxW = targetRect.width(); val boxH = targetRect.height()
-                  if (pictureScaling == "Crop") {
-                      val scale = maxOf(boxW.toFloat() / bmp.width, boxH.toFloat() / bmp.height)
-                      val cropW = (boxW / scale).toInt(); val cropH = (boxH / scale).toInt()
-                      val cropX = (bmp.width - cropW) / 2; val cropY = (bmp.height - cropH) / 2
-                      canvas.drawBitmap(bmp, Rect(cropX, cropY, cropX + cropW, cropY + cropH), targetRect, paint)
-                  } else {
-                      val scale = minOf(boxW.toFloat() / bmp.width, boxH.toFloat() / bmp.height)
-                      val drawW = (bmp.width * scale).toInt(); val drawH = (bmp.height * scale).toInt()
-                      val drawLeft = targetRect.left + (boxW - drawW) / 2; val drawTop = targetRect.top + (boxH - drawH) / 2
-                      canvas.drawBitmap(bmp, null, Rect(drawLeft, drawTop, drawLeft + drawW, drawTop + drawH), paint)
-                  }
-              }
-
-              private fun showFinalPrintDialog() {
-                  val finalBmp = renderedPageBitmap ?: return
-                  val methods = arrayOf(
-                      "🎨 Color / Photo Print (HP OTG System Spooler / Save PDF)",
-                      "⚡ Direct Raw USB OTG Transfer (HP PCL3 Monochrome)"
-                  )
-                  AlertDialog.Builder(this)
-                      .setTitle("Print on HP Ink Tank 319")
-                      .setItems(methods) { _, which ->
-                          if (which == 0) {
-                              val printHelper = PrintHelper(this)
-                              printHelper.scaleMode = PrintHelper.SCALE_MODE_FIT
-                              printHelper.printBitmap("PrinterShare_USB_Page_" + (currentPageIndex + 1), finalBmp)
-                          } else {
-                              usbHelper.sendRawUsbPrintJob(finalBmp) { _, message ->
-                                  runOnUiThread { Toast.makeText(this, message, Toast.LENGTH_LONG).show() }
-                              }
-                          }
-                      }.show()
-              }
-
-              private fun loadBitmapFromUri(uri: Uri): Bitmap? {
-                  return try { contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) } } catch (_: Exception) { null }
-              }
-
-              private fun loadPdfPage(pageIndex: Int) {
-                  val uri = pdfUri ?: return
-                  try {
-                      val fd = contentResolver.openFileDescriptor(uri, "r") ?: return
-                      val renderer = PdfRenderer(fd)
-                      totalPages = renderer.pageCount
-                      val page = renderer.openPage(pageIndex.coerceIn(0, totalPages - 1))
-                      val bmp = Bitmap.createBitmap(page.width * 2, page.height * 2, Bitmap.Config.ARGB_8888)
-                      Canvas(bmp).drawColor(Color.WHITE)
-                      page.render(bmp, null, null, PdfRenderer.Page.RENDER_MODE_FOR_PRINT)
-                      page.close()
-                      renderer.close()
-                      fd.close()
-                      sourceBitmaps.clear()
-                      sourceBitmaps.add(bmp)
-                  } catch (e: Exception) {
-                      Toast.makeText(this, "PDF Error: " + e.message, Toast.LENGTH_SHORT).show()
-                  }
-              }
-
-              private fun createBitmapFromText(text: String): Bitmap {
-                  val bmp = Bitmap.createBitmap(1200, 1600, Bitmap.Config.ARGB_8888)
-                  val canvas = Canvas(bmp)
-                  canvas.drawColor(Color.WHITE)
-                  val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.BLACK; textSize = 36f }
-                  var y = 100f
-                  for (line in text.split("\n")) {
-                      canvas.drawText(line, 60f, y, paint)
-                      y += 52f
-                  }
-                  return bmp
-              }
-          }
-          """)
-
-          w("app/src/main/java/com/example/printershareusb/MainActivity.kt", """
-          package com.example.printershareusb
-          import android.app.Activity
-          import android.app.AlertDialog
-          import android.content.*
-          import android.hardware.usb.UsbDevice
-          import android.hardware.usb.UsbManager
-          import android.os.Build
-          import android.os.Bundle
-          import android.widget.*
-          import androidx.appcompat.app.AppCompatActivity
-
-          class MainActivity : AppCompatActivity() {
-              private lateinit var usbHelper: UsbPrinterHelper
-              private lateinit var tvPrinterStatus: TextView
-              private val PICK_IMAGE = 201
-              private val PICK_PDF = 202
-
-              private val usbReceiver = object : BroadcastReceiver() {
-                  override fun onReceive(context: Context, intent: Intent) {
-                      if (UsbPrinterHelper.ACTION_USB_PERMISSION == intent.action) {
-                          val device: UsbDevice? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                              intent.getParcelableExtra(UsbManager.EXTRA_DEVICE, UsbDevice::class.java)
-                          } else {
-                              @Suppress("DEPRECATION")
-                              intent.getParcelableExtra(UsbManager.EXTRA_DEVICE)
-                          }
-                          if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false) && device != null) {
-                              UsbPrinterHelper.connectedUsbDevice = device
-                              UsbPrinterHelper.selectedPrinterName = device.productName ?: "HP Ink Tank 319 (USB)"
-                              tvPrinterStatus.text = UsbPrinterHelper.selectedPrinterName
-                              Toast.makeText(context, "Connected: " + UsbPrinterHelper.selectedPrinterName, Toast.LENGTH_SHORT).show()
-                          }
-                      }
-                  }
-              }
-
-              override fun onCreate(savedInstanceState: Bundle?) {
-                  super.onCreate(savedInstanceState)
-                  setContentView(R.layout.activity_main)
-                  usbHelper = UsbPrinterHelper(this)
-                  tvPrinterStatus = findViewById(R.id.tvPrinterStatus)
-                  applyDynamicTheme()
-
-                  val filter = IntentFilter(UsbPrinterHelper.ACTION_USB_PERMISSION)
-                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                      registerReceiver(usbReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
-                  } else {
-                      registerReceiver(usbReceiver, filter)
-                  }
-                  usbHelper.findUsbPrinter()?.let { tvPrinterStatus.text = UsbPrinterHelper.selectedPrinterName }
-
-                  findViewById<Button>(R.id.btnThemeToggle).setOnClickListener {
-                      ThemePrefs.toggle(this)
-                      applyDynamicTheme()
-                  }
-                  findViewById<Button>(R.id.btnSelectPrinter).setOnClickListener { showSelectPrinterDialog() }
-                  findViewById<Button>(R.id.btnPictures).setOnClickListener {
-                      val intent = Intent(Intent.ACTION_GET_CONTENT).apply { type = "image/*"; putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true) }
-                      startActivityForResult(Intent.createChooser(intent, "Select Pictures"), PICK_IMAGE)
-                  }
-                  findViewById<Button>(R.id.btnDocuments).setOnClickListener {
-                      val intent = Intent(Intent.ACTION_GET_CONTENT).apply { type = "application/pdf" }
-                      startActivityForResult(Intent.createChooser(intent, "Select PDF Document"), PICK_PDF)
-                  }
-                  findViewById<Button>(R.id.btnWebPages).setOnClickListener {
-                      startActivity(Intent(this, WebPrintActivity::class.java))
-                  }
-                  findViewById<Button>(R.id.btnQuickText).setOnClickListener {
-                      val input = EditText(this).apply { hint = "Type or paste any text / document note here..."; setPadding(40, 30, 40, 30) }
-                      AlertDialog.Builder(this).setTitle("Quick Text / Note Print").setView(input)
-                          .setPositiveButton("Open Preview") { _, _ ->
-                              val txt = input.text.toString().ifBlank { "Sample Print Page - HP Ink Tank 319" }
-                              startActivity(Intent(this, PrintPreviewActivity::class.java).putExtra("TEXT_CONTENT", txt))
-                          }.setNegativeButton("Cancel", null).show()
-                  }
-              }
-
-              private fun applyDynamicTheme() {
-                  val isDark = ThemePrefs.isDark(this)
-                  findViewById<RelativeLayout>(R.id.mainRoot).setBackgroundColor(ThemePrefs.bgColor(this))
-                  findViewById<RelativeLayout>(R.id.headerBar).setBackgroundColor(ThemePrefs.barColor(this))
-                  findViewById<RelativeLayout>(R.id.bottomBar).setBackgroundColor(ThemePrefs.barColor(this))
-                  findViewById<TextView>(R.id.tvAppTitle).setTextColor(ThemePrefs.textColor(this))
-                  findViewById<TextView>(R.id.tvPrinterTitle).setTextColor(ThemePrefs.textColor(this))
-                  findViewById<TextView>(R.id.tvPrinterStatus).setTextColor(ThemePrefs.subTextColor(this))
-                  findViewById<Button>(R.id.btnThemeToggle).text = if (isDark) "Light Mode" else "Dark Mode"
-                  val cardIds = intArrayOf(R.id.btnPictures, R.id.btnDocuments, R.id.btnWebPages, R.id.btnQuickText)
-                  for (id in cardIds) {
-                      findViewById<Button>(id).apply {
-                          setBackgroundColor(ThemePrefs.cardColor(this@MainActivity))
-                          setTextColor(ThemePrefs.textColor(this@MainActivity))
-                      }
-                  }
-              }
-
-              private fun showSelectPrinterDialog() {
-                  val items = arrayOf("Direct USB Connected (OTG)", "Nearby WiFi Printer", "Nearby Bluetooth Printer", "Print to PDF / System Spooler")
-                  AlertDialog.Builder(this).setTitle("Select Printer").setItems(items) { _, which ->
-                      when (which) {
-                          0 -> {
-                              val dev = usbHelper.findUsbPrinter()
-                              if (dev != null) {
-                                  usbHelper.requestPermission(dev)
-                                  tvPrinterStatus.text = dev.productName ?: "HP Ink Tank 319 (USB OTG)"
-                              } else {
-                                  UsbPrinterHelper.selectedPrinterName = "Direct USB (Waiting for OTG...)"
-                                  tvPrinterStatus.text = UsbPrinterHelper.selectedPrinterName
-                                  Toast.makeText(this, "USB Printer nahi mila! Phone me OTG ON karein.", Toast.LENGTH_LONG).show()
-                              }
-                          }
-                          1 -> {
-                              try {
-                                  val printManager = getSystemService(Context.PRINT_SERVICE) as android.print.PrintManager
-                                  printManager.print("WiFi_Discovery", object : android.print.PrintDocumentAdapter() {
-                                      override fun onLayout(o: android.print.PrintAttributes?, n: android.print.PrintAttributes?, c: android.os.CancellationSignal?, cb: android.print.PrintDocumentAdapter.LayoutResultCallback?, e: Bundle?) {}
-                                      override fun onWrite(p: Array<out android.print.PageRange>?, d: android.os.ParcelFileDescriptor?, c: android.os.CancellationSignal?, cb: android.print.PrintDocumentAdapter.WriteResultCallback?) {}
-                                  }, null)
-                                  UsbPrinterHelper.selectedPrinterName = "Nearby WiFi Printer"
-                                  tvPrinterStatus.text = UsbPrinterHelper.selectedPrinterName
-                              } catch (e: Exception) {
-                                  Toast.makeText(this, "WiFi Print Error: " + e.message, Toast.LENGTH_SHORT).show()
-                              }
-                          }
-                          2 -> {
-                              Toast.makeText(this, "Bluetooth pairing is managed via Android System Settings.", Toast.LENGTH_LONG).show()
-                              UsbPrinterHelper.selectedPrinterName = "Bluetooth Printer"
-                              tvPrinterStatus.text = UsbPrinterHelper.selectedPrinterName
-                          }
-                          3 -> {
-                              val printManager = getSystemService(Context.PRINT_SERVICE) as android.print.PrintManager
-                              printManager.print("PDF_Export", object : android.print.PrintDocumentAdapter() {
-                                  override fun onLayout(o: android.print.PrintAttributes?, n: android.print.PrintAttributes?, c: android.os.CancellationSignal?, cb: android.print.PrintDocumentAdapter.LayoutResultCallback?, e: Bundle?) {
-                                      val pInfo = android.print.PrintDocumentInfo.Builder("Export.pdf").setContentType(android.print.PrintDocumentInfo.CONTENT_TYPE_DOCUMENT).setPageCount(1).build()
-                                      cb?.onLayoutFinished(pInfo, true)
-                                  }
-                                  override fun onWrite(p: Array<out android.print.PageRange>?, d: android.os.ParcelFileDescriptor?, c: android.os.CancellationSignal?, cb: android.print.PrintDocumentAdapter.WriteResultCallback?) {
-                                      try {
-                                          val pdfDoc = android.graphics.pdf.PrintedPdfDocument(this@MainActivity, android.print.PrintAttributes.Builder().setMediaSize(android.print.PrintAttributes.MediaSize.ISO_A4).build())
-                                          val page = pdfDoc.startPage(1)
-                                          page.canvas.drawColor(Color.WHITE)
-                                          val paint = Paint().apply { color = Color.BLACK; textSize = 40f }
-                                          page.canvas.drawText("HP Ink Tank 319 - Test Page / PDF Export", 100f, 150f, paint)
-                                          pdfDoc.finishPage(page)
-                                          pdfDoc.writeTo(java.io.FileOutputStream(d?.fileDescriptor))
-                                          pdfDoc.close()
-                                          cb?.onWriteFinished(arrayOf(android.print.PageRange.ALL_PAGES))
-                                      } catch (err: Exception) { cb?.onWriteFailed(err.message) }
-                                  }
-                              }, null)
-                              UsbPrinterHelper.selectedPrinterName = "Print to PDF / Spooler"
-                              tvPrinterStatus.text = UsbPrinterHelper.selectedPrinterName
-                          }
-                      }
-                  }.show()
-              }
-
-              override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-                  super.onActivityResult(requestCode, resultCode, data)
-                  if (resultCode == Activity.RESULT_OK && data != null) {
-                      val uris = ArrayList<String>()
-                      if (data.clipData != null) {
-                          for (i in 0 until data.clipData!!.itemCount) uris.add(data.clipData!!.getItemAt(i).uri.toString())
-                      } else if (data.data != null) {
-                          uris.add(data.data!!.toString())
-                      }
-                      if (uris.isNotEmpty()) {
-                          val intent = Intent(this, PrintPreviewActivity::class.java).apply {
-                              putStringArrayListExtra("FILE_URIS", uris)
-                              putExtra("IS_PDF", requestCode == PICK_PDF)
-                          }
-                          startActivity(intent)
-                      }
-                  }
-              }
-
-              override fun onDestroy() {
-                  super.onDestroy()
-                  try { unregisterReceiver(usbReceiver) } catch (_: Exception) {}
-              }
-          }
-          """)
-
-          w("app/src/main/res/layout/activity_main.xml", """
-          <?xml version='1.0' encoding='utf-8'?>
-          <RelativeLayout xmlns:android='http://schemas.android.com/apk/res/android' android:id='@+id/mainRoot' android:layout_width='match_parent' android:layout_height='match_parent' android:background='#0D1117'>
-              <RelativeLayout android:id='@+id/headerBar' android:layout_width='match_parent' android:layout_height='60dp' android:background='#161B22' android:paddingStart='16dp' android:paddingEnd='16dp'>
-                  <TextView android:id='@+id/tvAppTitle' android:layout_width='wrap_content' android:layout_height='wrap_content' android:layout_centerVertical='true' android:text='PrinterShare USB Edition' android:textColor='#FFFFFF' android:textSize='18sp' android:textStyle='bold' />
-                  <Button android:id='@+id/btnThemeToggle' android:layout_width='100dp' android:layout_height='38dp' android:layout_alignParentEnd='true' android:layout_centerVertical='true' android:background='#0288D1' android:text='Light Mode' android:textAllCaps='false' android:textColor='#FFFFFF' android:textSize='12sp' />
-              </RelativeLayout>
-              <View android:id='@+id/headerDivider' android:layout_width='match_parent' android:layout_height='2dp' android:layout_below='@id/headerBar' android:background='#0288D1' />
-              <ScrollView android:layout_width='match_parent' android:layout_height='match_parent' android:layout_above='@+id/bottomBar' android:layout_below='@id/headerDivider'>
-                  <GridLayout android:layout_width='match_parent' android:layout_height='wrap_content' android:columnCount='2' android:padding='18dp'>
-                      <Button android:id='@+id/btnPictures' android:layout_width='0dp' android:layout_height='155dp' android:layout_columnWeight='1' android:layout_margin='8dp' android:background='#161B22' android:text='🖼️\n\nPictures\n(JPG / PNG)' android:textAllCaps='false' android:textColor='#FFFFFF' android:textSize='16sp' />
-                      <Button android:id='@+id/btnDocuments' android:layout_width='0dp' android:layout_height='155dp' android:layout_columnWeight='1' android:layout_margin='8dp' android:background='#161B22' android:text='📄\n\nDocuments\n(PDF Files)' android:textAllCaps='false' android:textColor='#FFFFFF' android:textSize='16sp' />
-                      <Button android:id='@+id/btnWebPages' android:layout_width='0dp' android:layout_height='155dp' android:layout_columnWeight='1' android:layout_margin='8dp' android:background='#161B22' android:text='🌐\n\nWeb Pages\n(Browser Print)' android:textAllCaps='false' android:textColor='#FFFFFF' android:textSize='16sp' />
-                      <Button android:id='@+id/btnQuickText' android:layout_width='0dp' android:layout_height='155dp' android:layout_columnWeight='1' android:layout_margin='8dp' android:background='#161B22' android:text='📝\n\nQuick Note\n(Text Print)' android:textAllCaps='false' android:textColor='#FFFFFF' android:textSize='16sp' />
-                  </GridLayout>
-              </ScrollView>
-              <RelativeLayout android:id='@+id/bottomBar' android:layout_width='match_parent' android:layout_height='76dp' android:layout_alignParentBottom='true' android:background='#161B22' android:padding='14dp'>
-                  <TextView android:id='@+id/tvPrinterTitle' android:layout_width='wrap_content' android:layout_height='wrap_content' android:text='Connected Printer' android:textColor='#FFFFFF' android:textSize='15sp' android:textStyle='bold' />
-                  <TextView android:id='@+id/tvPrinterStatus' android:layout_width='wrap_content' android:layout_height='wrap_content' android:layout_below='@id/tvPrinterTitle' android:layout_marginTop='2dp' android:text='Not selected (Tap Select)' android:textColor='#8B949E' android:textSize='13sp' />
-                  <Button android:id='@+id/btnSelectPrinter' android:layout_width='115dp' android:layout_height='44dp' android:layout_alignParentEnd='true' android:layout_centerVertical='true' android:background='#0288D1' android:text='Select' android:textAllCaps='false' android:textColor='#FFFFFF' android:textStyle='bold' />
-              </RelativeLayout>
-          </RelativeLayout>
-          """)
-
-          w("app/src/main/res/layout/activity_print_preview.xml", """
-          <?xml version='1.0' encoding='utf-8'?>
-          <RelativeLayout xmlns:android='http://schemas.android.com/apk/res/android' android:id='@+id/previewRoot' android:layout_width='match_parent' android:layout_height='match_parent' android:background='#0D1117'>
-              <RelativeLayout android:id='@+id/previewHeader' android:layout_width='match_parent' android:layout_height='56dp' android:background='#161B22' android:paddingStart='16dp' android:paddingEnd='16dp'>
-                  <TextView android:id='@+id/tvPreviewTitle' android:layout_width='wrap_content' android:layout_height='wrap_content' android:layout_centerVertical='true' android:text='Print Preview' android:textColor='#FFFFFF' android:textSize='19sp' android:textStyle='bold' />
-                  <LinearLayout android:id='@+id/pdfNavLayout' android:layout_width='wrap_content' android:layout_height='wrap_content' android:layout_alignParentEnd='true' android:layout_centerVertical='true' android:gravity='center_vertical' android:orientation='horizontal'>
-                      <Button android:id='@+id/btnPrevPage' android:layout_width='40dp' android:layout_height='36dp' android:background='#0288D1' android:text='&lt;' android:textColor='#FFFFFF' />
-                      <TextView android:id='@+id/tvPageIndicator' android:layout_width='wrap_content' android:layout_height='wrap_content' android:layout_marginStart='10dp' android:layout_marginEnd='10dp' android:text='1 / 1' android:textColor='#FFFFFF' android:textSize='14sp' />
-                      <Button android:id='@+id/btnNextPage' android:layout_width='40dp' android:layout_height='36dp' android:background='#0288D1' android:text='&gt;' android:textColor='#FFFFFF' />
-                  </LinearLayout>
-              </RelativeLayout>
-              <View android:id='@+id/previewDivider' android:layout_width='match_parent' android:layout_height='2dp' android:layout_below='@id/previewHeader' android:background='#0288D1' />
-              <FrameLayout android:layout_width='match_parent' android:layout_height='match_parent' android:layout_above='@+id/bottomControls' android:layout_below='@id/previewDivider' android:padding='18dp'>
-                  <ImageView android:id='@+id/ivPageCanvas' android:layout_width='match_parent' android:layout_height='match_parent' android:scaleType='fitCenter' />
-              </FrameLayout>
-              <RelativeLayout android:id='@+id/bottomControls' android:layout_width='match_parent' android:layout_height='118dp' android:layout_alignParentBottom='true' android:background='#161B22' android:padding='12dp'>
-                  <TextView android:id='@+id/tvPageSummary' android:layout_width='wrap_content' android:layout_height='wrap_content' android:layout_alignParentStart='true' android:layout_toStartOf='@+id/btnOptions' android:lineSpacingExtra='2dp' android:text='A4 / Letter • Normal' android:textColor='#8B949E' android:textSize='12sp' />
-                  <TextView android:id='@+id/tvSelectedPrinterPreview' android:layout_width='wrap_content' android:layout_height='wrap_content' android:layout_below='@id/tvPageSummary' android:layout_marginTop='6dp' android:text='HP Ink Tank 319 (USB OTG)' android:textColor='#0288D1' android:textSize='13sp' android:textStyle='bold' />
-                  <Button android:id='@+id/btnOptions' android:layout_width='110dp' android:layout_height='42dp' android:layout_alignParentEnd='true' android:background='#30363D' android:text='Options' android:textAllCaps='false' android:textColor='#FFFFFF' />
-                  <Button android:id='@+id/btnPrint' android:layout_width='110dp' android:layout_height='42dp' android:layout_below='@id/btnOptions' android:layout_alignParentEnd='true' android:layout_marginTop='8dp' android:background='#0288D1' android:text='Print' android:textAllCaps='false' android:textColor='#FFFFFF' android:textStyle='bold' />
-              </RelativeLayout>
-          </RelativeLayout>
-          """)
+          w("app/src/main/res/layout/activity_print_preview.xml", [
+              "<?xml version='1.0' encoding='utf-8'?>",
+              "<RelativeLayout xmlns:android='http://schemas.android.com/apk/res/android' android:id='@+id/previewRoot' android:layout_width='match_parent' android:layout_height='match_parent' android:background='#0D1117'>",
+              "    <RelativeLayout android:id='@+id/previewHeader' android:layout_width='match_parent' android:layout_height='56dp' android:background='#161B22' android:paddingStart='16dp' android:paddingEnd='16dp'>",
+              "        <TextView android:id='@+id/tvPreviewTitle' android:layout_width='wrap_content' android:layout_height='wrap_content' android:layout_centerVertical='true' android:text='Print Preview' android:textColor='#FFFFFF' android:textSize='19sp' android:textStyle='bold' />",
+              "        <LinearLayout android:id='@+id/pdfNavLayout' android:layout_width='wrap_content' android:layout_height='wrap_content' android:layout_alignParentEnd='true' android:layout_centerVertical='true' android:gravity='center_vertical' android:orientation='horizontal'>",
+              "            <Button android:id='@+id/btnPrevPage' android:layout_width='40dp' android:layout_height='36dp' android:background='#0288D1' android:text='&lt;' android:textColor='#FFFFFF' />",
+              "            <TextView android:id='@+id/tvPageIndicator' android:layout_width='wrap_content' android:layout_height='wrap_content' android:layout_marginStart='10dp' android:layout_marginEnd='10dp' android:text='1 / 1' android:textColor='#FFFFFF' android:textSize='14sp' />",
+              "            <Button android:id='@+id/btnNextPage' android:layout_width='40dp' android:layout_height='36dp' android:background='#0288D1' android:text='&gt;' android:textColor='#FFFFFF' />",
+              "        </LinearLayout>",
+              "    </RelativeLayout>",
+              "    <View android:id='@+id/previewDivider' android:layout_width='match_parent' android:layout_height='2dp' android:layout_below='@id/previewHeader' android:background='#0288D1' />",
+              "    <FrameLayout android:layout_width='match_parent' android:layout_height='match_parent' android:layout_above='@+id/bottomControls' android:layout_below='@id/previewDivider' android:padding='18dp'>",
+              "        <ImageView android:id='@+id/ivPageCanvas' android:layout_width='match_parent' android:layout_height='match_parent' android:scaleType='fitCenter' />",
+              "    </FrameLayout>",
+              "    <RelativeLayout android:id='@+id/bottomControls' android:layout_width='match_parent' android:layout_height='118dp' android:layout_alignParentBottom='true' android:background='#161B22' android:padding='12dp'>",
+              "        <TextView android:id='@+id/tvPageSummary' android:layout_width='wrap_content' android:layout_height='wrap_content' android:layout_alignParentStart='true' android:layout_toStartOf='@+id/btnOptions' android:lineSpacingExtra='2dp' android:text='A4 / Letter • Normal' android:textColor='#8B949E' android:textSize='12sp' />",
+              "        <TextView android:id='@+id/tvSelectedPrinterPreview' android:layout_width='wrap_content' android:layout_height='wrap_content' android:layout_below='@id/tvPageSummary' android:layout_marginTop='6dp' android:text='HP Ink Tank 319 (USB OTG)' android:textColor='#0288D1' android:textSize='13sp' android:textStyle='bold' />",
+              "        <Button android:id='@+id/btnOptions' android:layout_width='110dp' android:layout_height='42dp' android:layout_alignParentEnd='true' android:background='#30363D' android:text='Options' android:textAllCaps='false' android:textColor='#FFFFFF' />",
+              "        <Button android:id='@+id/btnPrint' android:layout_width='110dp' android:layout_height='42dp' android:layout_below='@id/btnOptions' android:layout_alignParentEnd='true' android:layout_marginTop='8dp' android:background='#0288D1' android:text='Print' android:textAllCaps='false' android:textColor='#FFFFFF' android:textStyle='bold' />",
+              "    </RelativeLayout>",
+              "</RelativeLayout>"
+          ])
           EOF
+          python3 make_project.py
+          rm -f make_project.py
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -899,12 +914,13 @@ jobs:
         with:
           gradle-version: '8.4'
 
-      - name: Build APK
+      - name: Build APK & Rename
         run: |
           gradle assembleDebug --stacktrace
+          cp app/build/outputs/apk/debug/app-debug.apk PrinterShare_USB_Edition.apk
 
       - name: Upload Compiled APK
         uses: actions/upload-artifact@v4
         with:
           name: PrinterShare_USB_Edition
-          path: app/build/outputs/apk/debug/app-debug.apk
+          path: PrinterShare_USB_Edition.apk
