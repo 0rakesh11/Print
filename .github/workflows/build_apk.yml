@@ -8,7 +8,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Generate Fully Functional Project Files
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Generate Project Files
         run: |
           rm -rf * .[^.]* 2>/dev/null || true
           python3 - << 'EOF'
@@ -64,8 +67,8 @@ jobs:
                   applicationId 'com.example.printershareusb'
                   minSdk 24
                   targetSdk 34
-                  versionCode 4
-                  versionName '4.0'
+                  versionCode 5
+                  versionName '5.0'
                   setProperty('archivesBaseName', 'PrinterShare_USB_Edition')
               }
               compileOptions {
@@ -94,8 +97,8 @@ jobs:
               <application
                   android:allowBackup="true"
                   android:label="PrinterShare USB Edition"
-                  android:icon='@drawable/ic_launcher_printer'
-                  android:roundIcon='@drawable/ic_launcher_printer'
+                  android:icon="@drawable/ic_launcher_printer"
+                  android:roundIcon="@drawable/ic_launcher_printer"
                   android:usesCleartextTraffic="true"
                   android:supportsRtl="true"
                   android:theme="@style/Theme.AppCompat.DayNight.NoActionBar">
@@ -603,28 +606,9 @@ jobs:
                       .setTitle("Print on HP Ink Tank 319")
                       .setItems(methods) { _, which ->
                           if (which == 0) {
-                              // Trigger Android System Print Spooler / Print to PDF / WiFi Network Print
-                              val printManager = getSystemService(Context.PRINT_SERVICE) as android.print.PrintManager
-                              printManager.print("PrinterShare_Job", object : android.print.PrintDocumentAdapter() {
-                                  override fun onLayout(oldAttributes: android.print.PrintAttributes?, newAttributes: android.print.PrintAttributes?, cancellationSignal: android.os.CancellationSignal?, callback: android.print.PrintDocumentAdapter.LayoutResultCallback?, extras: Bundle?) {
-                                      if (cancellationSignal?.isCanceled == true) { callback?.onLayoutCancelled(); return }
-                                      val pInfo = android.print.PrintDocumentInfo.Builder("PrinterShare_Doc.pdf").setContentType(android.print.PrintDocumentInfo.CONTENT_TYPE_DOCUMENT).setPageCount(1).build()
-                                      callback?.onLayoutFinished(pInfo, true)
-                                  }
-                                  override fun onWrite(pages: Array<out android.print.PageRange>?, destination: android.os.ParcelFileDescriptor?, cancellationSignal: android.os.CancellationSignal?, callback: android.print.PrintDocumentAdapter.WriteResultCallback?) {
-                                      try {
-                                          val pdfDoc = android.graphics.pdf.PrintedPdfDocument(this@PrintPreviewActivity, android.print.PrintAttributes.Builder().setMediaSize(android.print.PrintAttributes.MediaSize.ISO_A4).setResolution(android.print.PrintAttributes.Resolution("pdf", "pdf", 300, 300)).setMinMargins(android.print.PrintAttributes.Margins.NO_MARGINS).build())
-                                          val page = pdfDoc.startPage(1)
-                                          page.canvas.drawBitmap(finalBmp, 0f, 0f, null)
-                                          pdfDoc.finishPage(page)
-                                          pdfDoc.writeTo(java.io.FileOutputStream(destination?.fileDescriptor))
-                                          pdfDoc.close()
-                                          callback?.onWriteFinished(arrayOf(android.print.PageRange.ALL_PAGES))
-                                      } catch (e: Exception) {
-                                          callback?.onWriteFailed(e.message)
-                                      }
-                                  }
-                              }, null)
+                              val printHelper = PrintHelper(this)
+                              printHelper.scaleMode = PrintHelper.SCALE_MODE_FIT
+                              printHelper.printBitmap("PrinterShare_USB_Page_" + (currentPageIndex + 1), finalBmp)
                           } else {
                               usbHelper.sendRawUsbPrintJob(finalBmp) { _, message ->
                                   runOnUiThread { Toast.makeText(this, message, Toast.LENGTH_LONG).show() }
@@ -769,35 +753,28 @@ jobs:
               }
 
               private fun showSelectPrinterDialog() {
-                  val items = arrayOf(
-                      "🔌  Direct USB OTG Connected",
-                      "📡  Nearby WiFi Printer",
-                      "🦷  Nearby Bluetooth Printer",
-                      "📄  Print to PDF / System Spooler"
-                  )
-                  AlertDialog.Builder(this).setTitle("Select Printer Mode").setItems(items) { _, which ->
+                  val items = arrayOf("Direct USB Connected (OTG)", "Nearby WiFi Printer", "Nearby Bluetooth Printer", "Print to PDF / System Spooler")
+                  AlertDialog.Builder(this).setTitle("Select Printer").setItems(items) { _, which ->
                       when (which) {
                           0 -> {
                               val dev = usbHelper.findUsbPrinter()
                               if (dev != null) {
                                   usbHelper.requestPermission(dev)
                                   tvPrinterStatus.text = dev.productName ?: "HP Ink Tank 319 (USB OTG)"
-                                  Toast.makeText(this, "USB Printer Connected Successfully!", Toast.LENGTH_SHORT).show()
                               } else {
                                   UsbPrinterHelper.selectedPrinterName = "Direct USB (Waiting for OTG...)"
                                   tvPrinterStatus.text = UsbPrinterHelper.selectedPrinterName
-                                  Toast.makeText(this, "USB Printer nahi mila! OTG cable aur printer check karein.", Toast.LENGTH_LONG).show()
+                                  Toast.makeText(this, "USB Printer nahi mila! Phone me OTG ON karein.", Toast.LENGTH_LONG).show()
                               }
                           }
                           1 -> {
-                              // Trigger Android Print Framework to discover Network / WiFi Printers
                               try {
                                   val printManager = getSystemService(Context.PRINT_SERVICE) as android.print.PrintManager
                                   printManager.print("WiFi_Discovery", object : android.print.PrintDocumentAdapter() {
                                       override fun onLayout(o: android.print.PrintAttributes?, n: android.print.PrintAttributes?, c: android.os.CancellationSignal?, cb: android.print.PrintDocumentAdapter.LayoutResultCallback?, e: Bundle?) {}
                                       override fun onWrite(p: Array<out android.print.PageRange>?, d: android.os.ParcelFileDescriptor?, c: android.os.CancellationSignal?, cb: android.print.PrintDocumentAdapter.WriteResultCallback?) {}
                                   }, null)
-                                  UsbPrinterHelper.selectedPrinterName = "Nearby WiFi Printer (System Spooler)"
+                                  UsbPrinterHelper.selectedPrinterName = "Nearby WiFi Printer"
                                   tvPrinterStatus.text = UsbPrinterHelper.selectedPrinterName
                               } catch (e: Exception) {
                                   Toast.makeText(this, "WiFi Print Error: " + e.message, Toast.LENGTH_SHORT).show()
@@ -809,7 +786,6 @@ jobs:
                               tvPrinterStatus.text = UsbPrinterHelper.selectedPrinterName
                           }
                           3 -> {
-                              // Direct Print to PDF / System Spooler
                               val printManager = getSystemService(Context.PRINT_SERVICE) as android.print.PrintManager
                               printManager.print("PDF_Export", object : android.print.PrintDocumentAdapter() {
                                   override fun onLayout(o: android.print.PrintAttributes?, n: android.print.PrintAttributes?, c: android.os.CancellationSignal?, cb: android.print.PrintDocumentAdapter.LayoutResultCallback?, e: Bundle?) {
